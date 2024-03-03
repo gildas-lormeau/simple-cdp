@@ -32,5 +32,5 @@ await Target.setAutoAttach({
     flatten: true,
     waitForDebuggerOnStart: false,
 });
-cdp.Target.createTarget({ url: "https://example.com" });
+await cdp.Target.createTarget({ url: "https://example.com" });
 ```
