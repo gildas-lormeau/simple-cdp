@@ -35,7 +35,7 @@ cdp.Target.addEventListener("attachedToTarget", async ({ detail: { params } }) =
     console.log(result.value);
 });
 // send command to create a new target
-await Target.setAutoAttach({
+await cdp.Target.setAutoAttach({
     autoAttach: true,
     flatten: true,
     waitForDebuggerOnStart: false,
