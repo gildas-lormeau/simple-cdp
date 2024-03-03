@@ -6,7 +6,8 @@
     "version": "1.0.1",
     "type": "module",
     "keywords": [
-        "cdp"
+        "cdp",
+        "chrome-devtools-protocol"
     ],
     "module": "./mod.js",
     "types": "./mod.d.ts",
