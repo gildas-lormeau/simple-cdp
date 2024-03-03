@@ -9,6 +9,9 @@
         "cdp",
         "chrome-devtools-protocol"
     ],
+    "engines": {
+        "deno": ">=1.4"
+    },
     "module": "./mod.js",
     "types": "./mod.d.ts",
     "exports": {
