@@ -4,8 +4,16 @@ simple-cdp is a JavaScript library to interact with the Chrome DevTools Protocol
 
 # Install
 
+- from NPM:
+
 ```sh
 npm install simple-cdp
+```
+
+- from JSR:
+
+```sh
+deno add @simple-cdp/simple-cdp
 ```
 
 # Usage example
