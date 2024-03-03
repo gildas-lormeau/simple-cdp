@@ -20,9 +20,9 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/gildas-lormeau/zip.js.git"
+        "url": "git+https://github.com/gildas-lormeau/simple-cdp.git"
     },
     "bugs": {
-        "url": "https://github.com/gildas-lormeau/zip.js/issues"
+        "url": "https://github.com/gildas-lormeau/simple-cdp/issues"
     }
 }
