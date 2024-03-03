@@ -8,6 +8,9 @@ const CLOSE_EVENT = "close";
 const ERROR_EVENT = "error";
 const EVENT_LISTENERS = ["addEventListener", "removeEventListener"];
 const READY_PROPERTY = "ready";
+const OPTIONS_PROPERTY = "options";
+const CONNECTION_PROPERTY = "connection";
+const RESET_PROPERTY = "reset";
 const DEFAULT_URL = "http://localhost:9222";
 const DEFAULT_PATH = "json/version";
 const DEFAULT_CONNECTION_MAX_RETRY = 20;
@@ -39,8 +42,14 @@ const apiProxy = new Proxy(EMPTY_OBJECT, {
         return target[domainName];
     }
 });
-const api = Object.assign(apiProxy, { options, connection, reset });
+const api = Object.assign(apiProxy);
 Object.defineProperty(api, READY_PROPERTY, { get: ready });
+Object.defineProperty(api, OPTIONS_PROPERTY, {
+    get: () => options,
+    set: (value) => Object.assign(options, value)
+});
+Object.defineProperty(api, CONNECTION_PROPERTY, { get: () => connection });
+Object.defineProperty(api, RESET_PROPERTY, { value: reset });
 export default api;
 
 async function ready() {
