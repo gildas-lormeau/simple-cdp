@@ -1,5 +1,5 @@
 {
-    "name": "simple-cdp.js",
+    "name": "simple-cdp",
     "description": "A JavaScript library to interact with the Chrome DevTools Protocol",
     "author": "Gildas Lormeau",
     "license": "MIT",
