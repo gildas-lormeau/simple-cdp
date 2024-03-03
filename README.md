@@ -20,7 +20,7 @@ deno add @simple-cdp/simple-cdp
 
 ```js
 // import the module
-import cdp from "simple-cdp";
+import cdp from "@simple-cdp/simple-cdp";
 
 // wait for connection to be ready
 await cdp.ready;
