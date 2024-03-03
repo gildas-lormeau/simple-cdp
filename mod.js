@@ -6,7 +6,7 @@ const MESSAGE_EVENT = "message";
 const OPEN_EVENT = "open";
 const CLOSE_EVENT = "close";
 const ERROR_EVENT = "error";
-const LISTENER_EVENTS = ["addEventListener", "removeEventListener"];
+const EVENT_LISTENERS = ["addEventListener", "removeEventListener"];
 const READY_PROPERTY = "ready";
 const DEFAULT_URL = "http://localhost:9222";
 const DEFAULT_PATH = "json/version";
@@ -25,7 +25,7 @@ const apiProxy = new Proxy(EMPTY_OBJECT, {
         if (!(domainName in target)) {
             target[domainName] = new Proxy(EMPTY_OBJECT, {
                 get(_, methodName) {
-                    if (LISTENER_EVENTS.includes(methodName)) {
+                    if (EVENT_LISTENERS.includes(methodName)) {
                         return (type, listener) => connection[methodName](`${domainName}.${type}`, listener);
                     } else {
                         return async (params = {}, sessionId) => {
