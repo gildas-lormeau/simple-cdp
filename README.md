@@ -5,7 +5,7 @@ simple-cdp.js is a JavaScript library to interact with the Chrome DevTools Proto
 # Install
 
 ```sh
-npm install simple-cdp.js
+npm install simple-cdp
 ```
 
 # Usage example
