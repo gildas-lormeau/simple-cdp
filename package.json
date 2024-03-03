@@ -3,14 +3,15 @@
     "description": "JavaScript library to interact with the Chrome DevTools Protocol",
     "author": "Gildas Lormeau",
     "license": "MIT",
-    "version": "1.1.1",
+    "version": "1.1.2",
     "type": "module",
     "keywords": [
         "cdp",
         "chrome-devtools-protocol"
     ],
     "engines": {
-        "deno": ">=1.4"
+        "deno": ">=1.4",
+        "bun": ">=1.0"
     },
     "module": "./mod.js",
     "types": "./mod.d.ts",
