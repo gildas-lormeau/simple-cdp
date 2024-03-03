@@ -131,10 +131,25 @@ declare interface CDPEventTarget {
   ): void;
 }
 
-declare const api:
-  & API
-  & {
-    [Key in string as Capitalize<Key>]: CDPEventTarget;
-  };
+/**
+ * Methods of the event target
+ */
+type CDPEventTargetMethods = {
+  [Key in Exclude<string, keyof CDPEventTarget> as Uncapitalize<Key>]: (
+    args: object,
+    sessionId?: string,
+  ) => Promise<object>;
+};
+
+/**
+ * The API objects
+ */
+type APIObjects = {
+  [Key in string as Capitalize<Key>]:
+    & CDPEventTarget
+    & CDPEventTargetMethods;
+};
+
+declare const api: API & APIObjects;
 
 export default api;
