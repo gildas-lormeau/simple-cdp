@@ -38,7 +38,7 @@ cdp.Target.addEventListener("attachedToTarget", async ({ detail: { params } }) =
 await cdp.Target.setAutoAttach({
     autoAttach: true,
     flatten: true,
-    waitForDebuggerOnStart: false,
+    waitForDebuggerOnStart: false
 });
 await cdp.Target.createTarget({ url: "https://example.com" });
 ```
