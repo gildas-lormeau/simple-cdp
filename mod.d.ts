@@ -134,7 +134,7 @@ declare interface CDPEventTarget {
 /**
  * Methods of the event target
  */
-type CDPEventTargetMethods = {
+declare type CDPEventTargetMethods = {
   [Key in Exclude<string, keyof CDPEventTarget> as Uncapitalize<Key>]: (
     args: object,
     sessionId?: string,
@@ -144,7 +144,7 @@ type CDPEventTargetMethods = {
 /**
  * The API objects
  */
-type APIObjects = {
+declare type APIObjects = {
   [Key in string as Capitalize<Key>]:
     & CDPEventTarget
     & CDPEventTargetMethods;
