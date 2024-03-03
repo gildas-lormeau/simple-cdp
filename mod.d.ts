@@ -1,55 +1,75 @@
+/**
+ * The API of the connection
+ */
 declare interface API {
   /**
-   * @property {Options} options - The options of the connection
+   * The options of the connection
    */
   options: Options;
   /**
-   * @property {Connection} connection - The connection object
+   * The connection object
    */
   connection: Connection;
   /**
-   * @property {Promise<void>} ready - A promise that resolves when the connection is ready
+   * A promise that resolves when the connection is ready
    */
   ready: Promise<void>;
   /**
-   * @method {void} reset - Reset the connection
+   * Reset the connection
    */
   reset(): void;
 }
 
+/**
+ * The options of the connection
+ */
 declare interface Options {
   /**
-   * @property {string} url - The URL of the connection
+   * The URL of the connection
+   *
+   * @defaultValue "http://localhost:9222"
    */
   url: string;
   /**
-   * @property {string} path - The path of the connection
+   * The path of the connection
+   *
+   * @defaultValue "json/version"
    */
   path: string;
   /**
-   * @property {string} connectionMaxRetry - The maximum number of retries
+   * The maximum number of retries
+   *
+   * @defaultValue 20
    */
   connectionMaxRetry: number;
   /**
-   * @property {number} connectionRetryDelay - The delay between retries
+   * The delay between retries
+   *
+   * @defaultValue 500
    */
   connectionRetryDelay: number;
 }
 
+/**
+ * The connection class
+ */
 declare class Connection {
   /**
-   * @param options - The options of the connection
+   * The constructor of the connection
+   *
+   * @param options The options of the connection
    */
   constructor(options?: Options);
   /**
-   * @method {Promise<void>} open - Open the connection
+   * Open the connection
    */
   open(): Promise<void>;
   /**
-   * @method {Promise<object>} sendMessage - Send a message to the connection
-   * @param method - The method of the message
-   * @param params - The parameters of the message
-   * @param sesssionId - The session ID of the message
+   *  Send a message to the connection
+   *
+   * @param method The method of the message
+   * @param params The parameters of the message
+   * @param sesssionId The session ID of the message
    */
   sendMessage(
     method: string,
@@ -57,36 +77,64 @@ declare class Connection {
     sesssionId?: string,
   ): Promise<object>;
   /**
-   * @method {void} close - Close the connection
+   * Close the connection
    */
   close(): void;
 }
 
-declare interface EventTarget {
+/**
+ * Event of the Chrome DevTools Protocol
+ */
+declare interface CDPEvent {
   /**
-   * @method {void} addEventListener - Add an event listener
-   * @param type - The type of the event
-   * @param listener - The listener of the event
+   * Event type
+   */
+  type: string;
+  /**
+   * parameters
+   */
+  params: object;
+  /**
+   * session ID
+   */
+  sessionId?: string;
+}
+
+/**
+ * Listener of the Chrome DevTools Protocol
+ */
+declare type CDPListener = (evt: CDPEvent) => void;
+
+/**
+ * Event target of the Chrome DevTools Protocol
+ */
+declare interface CDPEventTarget {
+  /**
+   * Add an event listener
+   *
+   * @param type The type of the event
+   * @param listener The listener of the event
    */
   addEventListener(
     type: string,
-    listener: EventListenerOrEventListenerObject,
+    listener: CDPListener,
   ): void;
   /**
-   * @method {void} removeEventListener - Remove an event listener
-   * @param type - The type of the event
-   * @param listener - The listener of the event
+   * Remove an event listener
+   *
+   * @param type The type of the event
+   * @param listener The listener of the event
    */
   removeEventListener(
     type: string,
-    listener: EventListenerOrEventListenerObject,
+    listener: CDPListener,
   ): void;
 }
 
 declare const api:
   & API
   & {
-    [Key in string as Capitalize<Key>]: EventTarget;
+    [Key in string as Capitalize<Key>]: CDPEventTarget;
   };
 
 export default api;

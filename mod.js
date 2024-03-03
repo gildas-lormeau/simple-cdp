@@ -108,7 +108,8 @@ class Connection extends EventTarget {
             this.#pendingRequests.delete(id);
         }
         if (method !== UNDEFINED_VALUE) {
-            const event = new CustomEvent(method, { detail: { params, sessionId } });
+            const event = new Event(method);
+            Object.assign(event, { params, sessionId });
             this.dispatchEvent(event);
         }
     }

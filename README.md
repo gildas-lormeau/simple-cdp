@@ -26,7 +26,7 @@ import cdp from "@simple-cdp/simple-cdp";
 await cdp.ready;
 
 // add event listener
-cdp.Target.addEventListener("attachedToTarget", async ({ detail: { params } }) => {
+cdp.Target.addEventListener("attachedToTarget", async ({ params }) => {
     const { sessionId } = params;
     // send command to enable runtime
     await cdp.Runtime.enable(null, sessionId);
