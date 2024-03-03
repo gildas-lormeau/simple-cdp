@@ -1,0 +1,28 @@
+{
+    "name": "simple-cdp.js",
+    "description": "A JavaScript library to interact with the Chrome DevTools Protocol",
+    "author": "Gildas Lormeau",
+    "license": "MIT",
+    "version": "1.0.0",
+    "type": "module",
+    "keywords": [
+        "cdp"
+    ],
+    "module": "./mod.js",
+    "types": "./mod.d.ts",
+    "exports": {
+        ".": {
+            "import": {
+                "types": "./mod.d.ts",
+                "default": "./mod.js"
+            }
+        }
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/gildas-lormeau/zip.js.git"
+    },
+    "bugs": {
+        "url": "https://github.com/gildas-lormeau/zip.js/issues"
+    }
+}
