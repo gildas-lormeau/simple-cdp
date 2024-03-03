@@ -103,7 +103,7 @@ declare interface CDPEvent {
 /**
  * Listener of the Chrome DevTools Protocol
  */
-declare type CDPListener = (evt: CDPEvent) => void;
+declare type CDPListener = (evt: CDPEvent) => void | Promise<void>;
 
 /**
  * Event target of the Chrome DevTools Protocol
