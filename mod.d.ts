@@ -108,7 +108,7 @@ declare type CDPEventListener = (evt: CDPEvent) => void | Promise<void>;
 /**
  * Event target of the Chrome DevTools Protocol
  */
-declare interface CDPEventTargetListeners {
+declare interface CDPAPIObjectListeners {
   /**
    * Add an event listener
    *
@@ -134,21 +134,21 @@ declare interface CDPEventTargetListeners {
 /**
  * Methods of the event target
  */
-declare type CDPEventTargetMethods = {
-  [Key in Exclude<string, keyof CDPEventTargetListeners> as Uncapitalize<Key>]:
+declare type CDPAPIObjectMethods = {
+  [Key in Exclude<string, keyof CDPAPIObjectListeners> as Uncapitalize<Key>]:
     (
       args: object,
       sessionId?: string,
     ) => Promise<object>;
 };
 
-declare type CDPEventTarget = CDPEventTargetListeners & CDPEventTargetMethods;
+declare type CDPAPIObject = CDPAPIObjectListeners & CDPAPIObjectMethods;
 
 /**
  * The API objects
  */
 declare type CDPAPIObjects = {
-  [Key in string as Capitalize<Key>]: CDPEventTarget;
+  [Key in string as Capitalize<Key>]: CDPAPIObject;
 };
 
 declare const api: CDPAPI & CDPAPIObjects;
