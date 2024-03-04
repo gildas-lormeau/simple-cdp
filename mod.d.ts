@@ -126,11 +126,11 @@ declare interface CDPDomainListeners {
 }
 
 /**
- * Domain methods
+ * Domain methods (e.g. "enable", "disable"...)
  */
 declare type CDPDomainMembers = {
   /**
-   * Methods of the event target (e.g. "enable", "disable"...)
+   * Method of the event target
    *
    * @param args The arguments
    * @param sessionId The session ID
