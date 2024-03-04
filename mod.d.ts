@@ -148,7 +148,7 @@ declare type CDPDomainMembers = {
 declare type CDPDomain = CDPDomainListeners & CDPDomainMembers;
 
 /**
- * The API domains
+ * API domains
  */
 declare type CDPDomains = {
   /**
