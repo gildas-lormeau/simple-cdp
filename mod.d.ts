@@ -135,6 +135,13 @@ declare interface CDPObjectListeners {
  * Methods of the event target
  */
 declare type CDPObjectMethods = {
+  /**
+   * Methods of the event target
+   *
+   * @param args The arguments
+   * @param sessionId The session ID
+   * @returns The result
+   */
   [Key in Exclude<string, keyof CDPObjectListeners> as Uncapitalize<Key>]: (
     args: object,
     sessionId?: string,
@@ -147,6 +154,9 @@ declare type CDPObject = CDPObjectListeners & CDPObjectMethods;
  * The API objects
  */
 declare type CDPObjects = {
+  /**
+   * An object of the API
+   */
   [Key in string as Capitalize<Key>]: CDPObject;
 };
 
