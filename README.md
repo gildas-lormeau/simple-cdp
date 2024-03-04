@@ -29,17 +29,19 @@ await cdp.ready;
 
 // add event listener
 cdp.Target.addEventListener("attachedToTarget", async ({ params }) => {
+    // get session ID
     const { sessionId } = params;
     // send command to enable runtime
     await cdp.Runtime.enable(null, sessionId);
     // send command to evaluate expression
-    const { result } = await cdp.Runtime.evaluate({ expression: "1 + 1" }, sessionId);
+    const expression = "1 + 1";
+    const { result } = await cdp.Runtime.evaluate({ expression }, sessionId);
     // display result in the console
     console.log(result.value);
 });
 
 // send command to create a new target
 const { targetId } = await cdp.Target.createTarget({ url: "https://example.com" });
-// send command to attach to the target
+// send command to attach a session to the target
 await cdp.Target.attachToTarget({ targetId });
 ```
