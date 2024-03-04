@@ -1,7 +1,7 @@
 /**
- * The API of the connection
+ * The API members
  */
-declare interface CDPInterface {
+declare interface CDPMembers {
   /**
    * The options of the connection
    */
@@ -128,7 +128,7 @@ declare interface CDPDomainListeners {
 /**
  * Domain methods
  */
-declare type CDPDomainMethods = {
+declare type CDPDomainMembers = {
   /**
    * Methods of the event target (e.g. "enable", "disable"...)
    *
@@ -142,14 +142,17 @@ declare type CDPDomainMethods = {
   ) => Promise<object>;
 };
 
-declare type CDPDomain = CDPDomainListeners & CDPDomainMethods;
+/**
+ * Domain of the API (e.g. "Page", "Target", "Runtime"...)
+ */
+declare type CDPDomain = CDPDomainListeners & CDPDomainMembers;
 
 /**
  * The API domains
  */
 declare type CDPDomains = {
   /**
-   * A domain of the API (e.g. "Page", "Target", "Runtime"...)
+   * Domain
    */
   [Key in string as Capitalize<Key>]: CDPDomain;
 };
@@ -157,8 +160,11 @@ declare type CDPDomains = {
 /**
  * The API
  */
-declare type CDP = CDPInterface & CDPDomains;
+declare type CDP = CDPMembers & CDPDomains;
 
+/**
+ * The API object
+ */
 declare const api: CDP;
 
 export default api;
