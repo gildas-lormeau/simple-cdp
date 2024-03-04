@@ -77,7 +77,7 @@ declare interface CDPConnection {
 }
 
 /**
- * Event of domain listeners
+ * Event of domain event listeners
  */
 declare interface CDPEvent {
   /**
@@ -95,7 +95,7 @@ declare interface CDPEvent {
 }
 
 /**
- * Function of domain listeners
+ * Function of domain event listeners
  */
 declare type CDPEventListener = (evt: CDPEvent) => void | Promise<void>;
 
