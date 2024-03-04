@@ -23,7 +23,7 @@ const options = {
     connectionMaxRetry: DEFAULT_CONNECTION_MAX_RETRY,
     connectionRetryDelay: DEFAULT_CONNECTION_RETRY_DELAY
 };
-const apiProxy = new Proxy(EMPTY_OBJECT, {
+const api = new Proxy(EMPTY_OBJECT, {
     get(target, domainName) {
         if (!(domainName in target)) {
             target[domainName] = new Proxy(EMPTY_OBJECT, {
@@ -42,7 +42,6 @@ const apiProxy = new Proxy(EMPTY_OBJECT, {
         return target[domainName];
     }
 });
-const api = Object.assign(apiProxy);
 Object.defineProperty(api, READY_PROPERTY, { get: ready });
 Object.defineProperty(api, OPTIONS_PROPERTY, {
     get: () => options,
