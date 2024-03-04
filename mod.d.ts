@@ -140,7 +140,7 @@ declare type CDPDomainMembers = {
     args: object,
     sessionId?: string,
   ) => Promise<object>;
-};
+}
 
 /**
  * Domain of the API (e.g. "Page", "Target", "Runtime"...)
@@ -155,7 +155,7 @@ declare type CDPDomains = {
    * Domain
    */
   [Key in string as Capitalize<Key>]: CDPDomain;
-};
+}
 
 /**
  * API
