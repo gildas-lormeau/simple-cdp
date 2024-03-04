@@ -41,7 +41,8 @@ cdp.Target.addEventListener("attachedToTarget", async ({ params }) => {
 });
 
 // send command to create a new target
-const { targetId } = await cdp.Target.createTarget({ url: "https://example.com" });
+const url = "https://example.com";
+const { targetId } = await cdp.Target.createTarget({ url });
 // send command to attach a session to the target
 await cdp.Target.attachToTarget({ targetId });
 ```
