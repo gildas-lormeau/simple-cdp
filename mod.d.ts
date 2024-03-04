@@ -77,7 +77,7 @@ declare interface CDPConnection {
 }
 
 /**
- * Event of the Chrome DevTools Protocol
+ * Event of domain listeners
  */
 declare interface CDPEvent {
   /**
@@ -95,14 +95,14 @@ declare interface CDPEvent {
 }
 
 /**
- * Listener of the Chrome DevTools Protocol
+ * Function of domain listeners
  */
 declare type CDPEventListener = (evt: CDPEvent) => void | Promise<void>;
 
 /**
- * Event target of the Chrome DevTools Protocol
+ * Domain listeners
  */
-declare interface CDPObjectListeners {
+declare interface CDPDomainListeners {
   /**
    * Add an event listener
    *
@@ -126,38 +126,38 @@ declare interface CDPObjectListeners {
 }
 
 /**
- * Methods of the event target
+ * Domain methods
  */
-declare type CDPObjectMethods = {
+declare type CDPDomainMethods = {
   /**
-   * Methods of the event target
+   * Methods of the event target (e.g. "enable", "disable"...)
    *
    * @param args The arguments
    * @param sessionId The session ID
    * @returns The result
    */
-  [Key in Exclude<string, keyof CDPObjectListeners> as Uncapitalize<Key>]: (
+  [Key in Exclude<string, keyof CDPDomainListeners> as Uncapitalize<Key>]: (
     args: object,
     sessionId?: string,
   ) => Promise<object>;
 };
 
-declare type CDPObject = CDPObjectListeners & CDPObjectMethods;
+declare type CDPDomain = CDPDomainListeners & CDPDomainMethods;
 
 /**
- * The API objects
+ * The API domains
  */
-declare type CDPObjects = {
+declare type CDPDomains = {
   /**
-   * An object of the API
+   * A domain of the API (e.g. "Page", "Target", "Runtime"...)
    */
-  [Key in string as Capitalize<Key>]: CDPObject;
+  [Key in string as Capitalize<Key>]: CDPDomain;
 };
 
 /**
  * The API
  */
-declare type CDP = CDPInterface & CDPObjects;
+declare type CDP = CDPInterface & CDPDomains;
 
 declare const api: CDP;
 
