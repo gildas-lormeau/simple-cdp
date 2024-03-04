@@ -1,5 +1,5 @@
 /**
- * The API members
+ * API members
  */
 declare interface CDPMembers {
   /**
@@ -21,7 +21,7 @@ declare interface CDPMembers {
 }
 
 /**
- * The options of the connection
+ * Options of the connection
  */
 declare interface CDPOptions {
   /**
@@ -51,7 +51,7 @@ declare interface CDPOptions {
 }
 
 /**
- * The connection class
+ * Connection class
  */
 declare interface CDPConnection {
   /**
@@ -59,7 +59,7 @@ declare interface CDPConnection {
    */
   open(): Promise<void>;
   /**
-   *  Send a message to the connection
+   * Send a message to the connection
    *
    * @param method The method of the message
    * @param params The parameters of the message
@@ -81,15 +81,15 @@ declare interface CDPConnection {
  */
 declare interface CDPEvent {
   /**
-   * Event type
+   * The event type
    */
   type: string;
   /**
-   * parameters
+   * The parameters
    */
   params: object;
   /**
-   * session ID
+   * The session ID
    */
   sessionId?: string;
 }
@@ -130,7 +130,7 @@ declare interface CDPDomainListeners {
  */
 declare type CDPDomainMembers = {
   /**
-   * Method of the event target
+   * Method of the domain
    *
    * @param args The arguments
    * @param sessionId The session ID
@@ -158,12 +158,12 @@ declare type CDPDomains = {
 };
 
 /**
- * The API
+ * API
  */
 declare type CDP = CDPMembers & CDPDomains;
 
 /**
- * The API object
+ * API object
  */
 declare const api: CDP;
 
