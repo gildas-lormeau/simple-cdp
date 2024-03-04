@@ -1,6 +1,6 @@
 # Introduction
 
-simple-cdp is a JavaScript library to interact with the Chrome DevTools Protocol.
+simple-cdp is a JavaScript library to interact with the [Chrome DevTools Protocol](https://chromedevtools.github.io/devtools-protocol/).
 
 # Install
 
