@@ -1,5 +1,5 @@
 /**
- * API members
+ * API methods and properties
  */
 declare interface CDPMembers {
   /**
@@ -100,7 +100,7 @@ declare interface CDPEvent {
 declare type CDPEventListener = (evt: CDPEvent) => void | Promise<void>;
 
 /**
- * Domain listeners
+ * Domain event listener registration methods
  */
 declare interface CDPDomainListeners {
   /**
@@ -148,7 +148,7 @@ declare type CDPDomainMembers = {
 declare type CDPDomain = CDPDomainListeners & CDPDomainMembers;
 
 /**
- * API domains
+ * Domains of the API
  */
 declare type CDPDomains = {
   /**
