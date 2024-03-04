@@ -137,7 +137,7 @@ declare type CDPDomainMembers = {
    * @returns The result
    */
   [Key in Exclude<string, keyof CDPDomainListeners> as Uncapitalize<Key>]: (
-    args: object,
+    args: object | null,
     sessionId?: string,
   ) => Promise<object>;
 }
