@@ -1,7 +1,7 @@
 /**
  * The API of the connection
  */
-declare interface CDPAPI {
+declare interface CDPInterface {
   /**
    * The options of the connection
    */
@@ -108,7 +108,7 @@ declare type CDPEventListener = (evt: CDPEvent) => void | Promise<void>;
 /**
  * Event target of the Chrome DevTools Protocol
  */
-declare interface CDPAPIObjectListeners {
+declare interface CDPObjectListeners {
   /**
    * Add an event listener
    *
@@ -134,23 +134,27 @@ declare interface CDPAPIObjectListeners {
 /**
  * Methods of the event target
  */
-declare type CDPAPIObjectMethods = {
-  [Key in Exclude<string, keyof CDPAPIObjectListeners> as Uncapitalize<Key>]:
-    (
-      args: object,
-      sessionId?: string,
-    ) => Promise<object>;
+declare type CDPObjectMethods = {
+  [Key in Exclude<string, keyof CDPObjectListeners> as Uncapitalize<Key>]: (
+    args: object,
+    sessionId?: string,
+  ) => Promise<object>;
 };
 
-declare type CDPAPIObject = CDPAPIObjectListeners & CDPAPIObjectMethods;
+declare type CDPObject = CDPObjectListeners & CDPObjectMethods;
 
 /**
  * The API objects
  */
-declare type CDPAPIObjects = {
-  [Key in string as Capitalize<Key>]: CDPAPIObject;
+declare type CDPObjects = {
+  [Key in string as Capitalize<Key>]: CDPObject;
 };
 
-declare const api: CDPAPI & CDPAPIObjects;
+/**
+ * The API
+ */
+declare type CDP = CDPInterface & CDPObjects;
+
+declare const api: CDP;
 
 export default api;
