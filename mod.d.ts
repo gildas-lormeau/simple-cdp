@@ -1,15 +1,15 @@
 /**
  * The API of the connection
  */
-declare interface API {
+declare interface CDPAPI {
   /**
    * The options of the connection
    */
-  options: Options;
+  options: CDPOptions;
   /**
    * The connection object
    */
-  connection: Connection;
+  connection: CDPConnection;
   /**
    * A promise that resolves when the connection is ready
    */
@@ -23,7 +23,7 @@ declare interface API {
 /**
  * The options of the connection
  */
-declare interface Options {
+declare interface CDPOptions {
   /**
    * The URL of the connection
    *
@@ -53,13 +53,13 @@ declare interface Options {
 /**
  * The connection class
  */
-declare class Connection {
+declare class CDPConnection {
   /**
    * The constructor of the connection
    *
    * @param options The options of the connection
    */
-  constructor(options?: Options);
+  constructor(options?: CDPOptions);
   /**
    * Open the connection
    */
@@ -147,10 +147,10 @@ declare type CDPEventTarget = CDPEventTargetListeners & CDPEventTargetMethods;
 /**
  * The API objects
  */
-declare type APIObjects = {
+declare type CDPAPIObjects = {
   [Key in string as Capitalize<Key>]: CDPEventTarget;
 };
 
-declare const api: API & APIObjects;
+declare const api: CDPAPI & CDPAPIObjects;
 
 export default api;
