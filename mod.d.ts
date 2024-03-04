@@ -53,13 +53,7 @@ declare interface CDPOptions {
 /**
  * The connection class
  */
-declare class CDPConnection {
-  /**
-   * The constructor of the connection
-   *
-   * @param options The options of the connection
-   */
-  constructor(options?: CDPOptions);
+declare interface CDPConnection {
   /**
    * Open the connection
    */
