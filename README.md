@@ -36,11 +36,14 @@ cdp.Target.addEventListener("attachedToTarget", async ({ params }) => {
     const { result } = await cdp.Runtime.evaluate({ expression: "1 + 1" }, sessionId);
     console.log(result.value);
 });
-// send command to create a new target
+
+// auto attach targets
 await cdp.Target.setAutoAttach({
     autoAttach: true,
     flatten: true,
     waitForDebuggerOnStart: false
 });
+
+// send command to create a new target
 await cdp.Target.createTarget({ url: "https://example.com" });
 ```
