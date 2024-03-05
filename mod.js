@@ -6,7 +6,6 @@ const OPEN_EVENT = "open";
 const CLOSE_EVENT = "close";
 const ERROR_EVENT = "error";
 const EVENT_LISTENERS = ["addEventListener", "removeEventListener"];
-const READY_PROPERTY = "ready";
 const OPTIONS_PROPERTY = "options";
 const CONNECTION_PROPERTY = "connection";
 const GET_TARGETS_PROPERTY = "getTargets";
@@ -25,16 +24,29 @@ const options = {
     connectionMaxRetry: DEFAULT_CONNECTION_MAX_RETRY,
     connectionRetryDelay: DEFAULT_CONNECTION_RETRY_DELAY
 };
+const pendingEventListenerCalls = [];
 const api = new Proxy(Object.create(null), {
     get(target, domainName) {
         if (!(domainName in target)) {
             target[domainName] = new Proxy(Object.create(null), {
                 get(_, methodName) {
                     if (EVENT_LISTENERS.includes(methodName)) {
-                        return (type, listener) => connection[methodName](`${domainName}.${type}`, listener);
+                        return (type, listener) => {
+                            if (connection === UNDEFINED_VALUE) {
+                                pendingEventListenerCalls.push({ methodName, type, listener });
+                            } else {
+                                connection[methodName](`${domainName}.${type}`, listener);
+                            }
+                        };
                     } else {
                         return async (params = {}, sessionId) => {
                             await ready();
+                            if (pendingEventListenerCalls.length > 0) {
+                                for (const { methodName, type, listener } of pendingEventListenerCalls) {
+                                    connection[methodName](`${domainName}.${type}`, listener);
+                                }
+                                pendingEventListenerCalls.length = 0;
+                            }
                             return connection.sendMessage(`${domainName}.${methodName}`, params, sessionId);
                         };
                     }
@@ -44,7 +56,6 @@ const api = new Proxy(Object.create(null), {
         return target[domainName];
     }
 });
-Object.defineProperty(api, READY_PROPERTY, { get: ready });
 Object.defineProperty(api, OPTIONS_PROPERTY, {
     get: () => options,
     set: (value) => Object.assign(options, value)
