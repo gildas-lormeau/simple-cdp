@@ -85,6 +85,7 @@ function getTargets() {
 async function reset() {
     if (connection !== UNDEFINED_VALUE) {
         connection.close();
+        connection = UNDEFINED_VALUE;
         await ready();
     }
 }
