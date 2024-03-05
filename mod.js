@@ -63,7 +63,7 @@ async function ready() {
 
 async function getTargets() {
     const response = await fetch(new URL(options.pathTargets, options.url));
-    return await response.json();
+    return response.json();
 }
 
 async function reset() {
