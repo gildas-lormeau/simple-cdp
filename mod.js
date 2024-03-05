@@ -190,16 +190,17 @@ function fetchData(url, method) {
         } else {
             return response.json();
         }
-    }, options.connectionMaxRetry, options.connectionRetryDelay);
+    });
 }
 
-async function retry(fn, maxRetry = 20, retryDelay = 500, retryCount = 0) {
+async function retry(fn, retryCount = 0) {
+    const { connectionMaxRetry, connectionRetryDelay } = options;
     try {
         return await fn();
     } catch (error) {
-        if (error.code == CONNECTION_REFUSED_ERROR_CODE && retryCount < maxRetry) {
-            await new Promise((resolve) => setTimeout(resolve, retryDelay));
-            return retry(fn, maxRetry, retryDelay, retryCount + 1);
+        if (error.code == CONNECTION_REFUSED_ERROR_CODE && retryCount < connectionMaxRetry) {
+            await new Promise((resolve) => setTimeout(resolve, connectionRetryDelay));
+            return retry(fn, retryCount + 1);
         } else {
             throw error;
         }
