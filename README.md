@@ -39,7 +39,7 @@ const { targetId } = await cdp.Target.createTarget({ url });
 // send command to attach a session to the target
 await cdp.Target.attachToTarget({ targetId });
 
-async function onAttachedToTarget ({ params }) {
+async function onAttachedToTarget({ params }) {
     // get session ID
     const { sessionId } = params;
 
