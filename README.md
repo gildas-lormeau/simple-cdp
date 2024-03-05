@@ -60,15 +60,15 @@ Alternatively, you can also pass the `webSocketDebuggerUrl` option directly and 
 // import the module (replace with "simple-cdp" if using NPM)
 import cdp from "@simple-cdp/simple-cdp";
 
-// wait for connection to be ready
-await cdp.ready;
-
 // find the first page target
 const targets = await cdp.getTargets();
 const page = targets.find(target => target.type === "page");
 
 // set the webSocketDebuggerUrl option
 cdp.options.webSocketDebuggerUrl = page.webSocketDebuggerUrl;
+
+// wait for connection to be ready
+await cdp.ready;
 
 // add event listener triggered when a session is attached
 cdp.Target.addEventListener("attachedToTarget", onAttachedToTarget);
