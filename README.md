@@ -36,7 +36,7 @@ await cdp.Target.setAutoAttach({
     waitForDebuggerOnStart: false
 });
 
-// create a new target
+// create a new target and navigate to https://example.com
 const url = "https://example.com";
 await cdp.Target.createTarget({ url });
 
@@ -71,7 +71,7 @@ cdp.options.webSocketDebuggerUrl = page.webSocketDebuggerUrl;
 // enabe "Page" domain
 await cdp.Page.enable();
 
-// navigate
+// navigate to https://example.com
 const url = "https://example.com";
 await cdp.Page.navigate({ url });
 
