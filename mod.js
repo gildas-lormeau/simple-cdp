@@ -86,6 +86,7 @@ async function reset() {
     if (connection !== UNDEFINED_VALUE) {
         connection.close();
         connection = UNDEFINED_VALUE;
+        pendingEventListenerCalls.length = 0;
         await ready();
     }
 }
