@@ -29,15 +29,15 @@ import cdp from "@simple-cdp/simple-cdp";
 // add event listener triggered when a session is attached to a target
 cdp.Target.addEventListener("attachedToTarget", onAttachedToTarget);
 
-// create a new target
-const url = "https://example.com";
-
 // enable auto-attach to new targets
 await cdp.Target.setAutoAttach({
     autoAttach: true,
     flatten: true,
     waitForDebuggerOnStart: false
 });
+
+// create a new target
+const url = "https://example.com";
 await cdp.Target.createTarget({ url });
 
 async function onAttachedToTarget({ params }) {
@@ -68,21 +68,21 @@ const page = targets.find(target => target.type === "page");
 // set the webSocketDebuggerUrl option
 cdp.options.webSocketDebuggerUrl = page.webSocketDebuggerUrl;
 
-// add event listener triggered when a session is attached
+// add event listener triggered when a session is attached to a target
 cdp.Target.addEventListener("attachedToTarget", onAttachedToTarget);
 
-// send command to create a new target
+// create a new target
 const url = "https://example.com";
 const { targetId } = await cdp.Target.createTarget({ url });
 
-// send command to attach a session to the target
+// attach a session to the target
 await cdp.Target.attachToTarget({ targetId });
 
 async function onAttachedToTarget() {
-    // send command to enable runtime
+    // enable "Runtime" domain
     await cdp.Runtime.enable();
 
-    // send command to evaluate expression
+    // evaluate JavaScript expression
     const expression = "41 + 1";
     const { result } = await cdp.Runtime.evaluate({ expression });
 
