@@ -54,3 +54,41 @@ async function onAttachedToTarget({ params }) {
     console.log(result.value);
 }
 ```
+
+Alternatively, you can also pass the `webSocketDebuggerUrl` option directly.
+```js
+// import the module (replace with "simple-cdp" if using NPM)
+import cdp from "@simple-cdp/simple-cdp";
+
+// find the first page target
+const targets = await cdp.getTargets();
+const page = targets.find(target => target.type === "page");
+
+// set the webSocketDebuggerUrl option
+cdp.options.webSocketDebuggerUrl = page.webSocketDebuggerUrl;
+
+// wait for connection to be ready
+await cdp.ready;
+
+// add event listener triggered when a session is attached
+cdp.Target.addEventListener("attachedToTarget", onAttachedToTarget);
+
+// send command to create a new target
+const url = "https://example.com";
+const { targetId } = await cdp.Target.createTarget({ url });
+
+// send command to attach a session to the target
+await cdp.Target.attachToTarget({ targetId });
+
+async function onAttachedToTarget() {
+    // send command to enable runtime
+    await cdp.Runtime.enable();
+
+    // send command to evaluate expression
+    const expression = "41 + 1";
+    const { result } = await cdp.Runtime.evaluate({ expression });
+
+    // display result in the console (i.e. 42)
+    console.log(result.value);
+}
+```
