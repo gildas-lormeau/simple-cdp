@@ -1,6 +1,5 @@
 /// <reference types="./mod.d.ts" />
 
-const EMPTY_OBJECT = Object.create(null);
 const UNDEFINED_VALUE = undefined;
 const MESSAGE_EVENT = "message";
 const OPEN_EVENT = "open";
@@ -26,10 +25,10 @@ const options = {
     connectionMaxRetry: DEFAULT_CONNECTION_MAX_RETRY,
     connectionRetryDelay: DEFAULT_CONNECTION_RETRY_DELAY
 };
-const api = new Proxy(EMPTY_OBJECT, {
+const api = new Proxy(Object.create(null), {
     get(target, domainName) {
         if (!(domainName in target)) {
-            target[domainName] = new Proxy(EMPTY_OBJECT, {
+            target[domainName] = new Proxy(Object.create(null), {
                 get(_, methodName) {
                     if (EVENT_LISTENERS.includes(methodName)) {
                         return (type, listener) => connection[methodName](`${domainName}.${type}`, listener);
