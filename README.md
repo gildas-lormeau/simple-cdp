@@ -68,12 +68,12 @@ const page = targets.find(target => target.type === "page");
 // set the webSocketDebuggerUrl option
 cdp.options.webSocketDebuggerUrl = page.webSocketDebuggerUrl;
 
-// create a new target
-const url = "https://example.com";
-const { targetId } = await cdp.Target.createTarget({ url });
+// enabe "Page" domain
+await cdp.Page.enable();
 
-// attach a session to the target
-await cdp.Target.attachToTarget({ targetId });
+// navigate
+const url = "https://example.com";
+await cdp.Page.navigate({ url });
 
 // enable "Runtime" domain
 await cdp.Runtime.enable();
