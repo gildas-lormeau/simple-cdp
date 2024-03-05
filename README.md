@@ -68,9 +68,6 @@ const page = targets.find(target => target.type === "page");
 // set the webSocketDebuggerUrl option
 cdp.options.webSocketDebuggerUrl = page.webSocketDebuggerUrl;
 
-// add event listener triggered when a session is attached to a target
-cdp.Target.addEventListener("attachedToTarget", onAttachedToTarget);
-
 // create a new target
 const url = "https://example.com";
 const { targetId } = await cdp.Target.createTarget({ url });
@@ -78,15 +75,13 @@ const { targetId } = await cdp.Target.createTarget({ url });
 // attach a session to the target
 await cdp.Target.attachToTarget({ targetId });
 
-async function onAttachedToTarget() {
-    // enable "Runtime" domain
-    await cdp.Runtime.enable();
+// enable "Runtime" domain
+await cdp.Runtime.enable();
 
-    // evaluate JavaScript expression
-    const expression = "41 + 1";
-    const { result } = await cdp.Runtime.evaluate({ expression });
+// evaluate JavaScript expression
+const expression = "41 + 1";
+const { result } = await cdp.Runtime.evaluate({ expression });
 
-    // display result in the console (i.e. 42)
-    console.log(result.value);
-}
+// display result in the console (i.e. 42)
+console.log(result.value);
 ```
