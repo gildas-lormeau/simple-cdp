@@ -56,7 +56,7 @@ async function onAttachedToTarget({ params }) {
 }
 ```
 
-Alternatively, you can also pass the `webSocketDebuggerUrl` option directly and avoid handling the session ID.
+You can also set the `webSocketDebuggerUrl` option directly, thus avoiding the need to manage the session ID.
 ```js
 // import the module (replace with "simple-cdp" if using NPM)
 import cdp from "@simple-cdp/simple-cdp";
