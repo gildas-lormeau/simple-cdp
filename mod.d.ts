@@ -18,6 +18,10 @@ declare interface CDPMembers {
    * Reset the connection
    */
   reset(): void;
+  /**
+   * Get the targets of the connection
+   */
+  getTargets(): Promise<object[]>;
 }
 
 /**
@@ -36,6 +40,16 @@ declare interface CDPOptions {
    * @defaultValue "json/version"
    */
   path: string;
+  /**
+   * The path of the connection targets
+   *
+   * @defaultValue "json"
+   */
+  pathTargets: string;
+  /**
+   * The WebSocket URL of the connection (#url and #path are ignored)
+   */
+  webSocketDebuggerUrl: string;
   /**
    * The maximum number of retries
    *

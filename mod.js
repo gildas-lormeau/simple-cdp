@@ -10,9 +10,11 @@ const EVENT_LISTENERS = ["addEventListener", "removeEventListener"];
 const READY_PROPERTY = "ready";
 const OPTIONS_PROPERTY = "options";
 const CONNECTION_PROPERTY = "connection";
+const GET_TARGETS_PROPERTY = "getTargets";
 const RESET_PROPERTY = "reset";
 const DEFAULT_URL = "http://localhost:9222";
 const DEFAULT_PATH = "json/version";
+const DEFAULT_PATH_TARGETS = "json";
 const DEFAULT_CONNECTION_MAX_RETRY = 20;
 const DEFAULT_CONNECTION_RETRY_DELAY = 500;
 
@@ -20,6 +22,7 @@ let connection;
 const options = {
     url: DEFAULT_URL,
     path: DEFAULT_PATH,
+    pathTargets: DEFAULT_PATH_TARGETS,
     connectionMaxRetry: DEFAULT_CONNECTION_MAX_RETRY,
     connectionRetryDelay: DEFAULT_CONNECTION_RETRY_DELAY
 };
@@ -48,6 +51,7 @@ Object.defineProperty(api, OPTIONS_PROPERTY, {
     set: (value) => Object.assign(options, value)
 });
 Object.defineProperty(api, CONNECTION_PROPERTY, { get: () => connection });
+Object.defineProperty(api, GET_TARGETS_PROPERTY, { value: getTargets });
 Object.defineProperty(api, RESET_PROPERTY, { value: reset });
 export default api;
 
@@ -55,6 +59,11 @@ async function ready() {
     if (connection === UNDEFINED_VALUE) {
         connection = await createConnection(options);
     }
+}
+
+async function getTargets() {
+    const response = await fetch(new URL(options.pathTargets, options.url));
+    return await response.json();
 }
 
 async function reset() {
@@ -68,18 +77,28 @@ class Connection extends EventTarget {
     #webSocket;
     #url;
     #path;
+    #webSocketDebuggerUrl;
     #pendingRequests = new Map();
     #nextRequestId = 0;
 
     constructor(options = {}) {
         super();
-        this.#url = options.url;
-        this.#path = options.path;
+        if (options.webSocketDebuggerUrl === UNDEFINED_VALUE) {
+            this.#url = options.url;
+            this.#path = options.path;
+        } else {
+            this.#webSocketDebuggerUrl = options.webSocketDebuggerUrl;
+        }
     }
 
     async open() {
-        const response = await fetch(new URL(this.#path, this.#url));
-        const { webSocketDebuggerUrl } = await response.json();
+        let webSocketDebuggerUrl;
+        if (this.#webSocketDebuggerUrl === UNDEFINED_VALUE) {
+            const response = await fetch(new URL(this.#path, this.#url));
+            ({ webSocketDebuggerUrl } = await response.json());
+        } else {
+            webSocketDebuggerUrl = this.#webSocketDebuggerUrl;
+        }
         this.#webSocket = new WebSocket(webSocketDebuggerUrl);
         this.#webSocket.addEventListener(MESSAGE_EVENT, (event) => this.#onMessage(JSON.parse(event.data)));
         return new Promise((resolve, reject) => {
