@@ -7,7 +7,8 @@
     "type": "module",
     "keywords": [
         "cdp",
-        "chrome-devtools-protocol"
+        "chrome-devtools-protocol",
+        "browser-automation"
     ],
     "engines": {
         "deno": ">=1.4",
