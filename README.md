@@ -20,8 +20,10 @@ npm install simple-cdp
 
 # Usage example
 
+Start a Chromium-based browser or Firefox with the switch `--remote-debugging-port=9222` and run the script below.
+
 ```js
-// import the module
+// import the module (replace with "simple-cdp" if using NPM)
 import cdp from "@simple-cdp/simple-cdp";
 
 // wait for connection to be ready
