@@ -20,33 +20,34 @@ npm install simple-cdp
 
 # Usage example
 
-Start a Chromium-based browser or Firefox with the switch `--remote-debugging-port=9222` and run the script below.
+Start a Chromium-based browser with the switch `--remote-debugging-port=9222` and run the script below.
 
 ```js
 // import the module (replace with "simple-cdp" if using NPM)
 import cdp from "@simple-cdp/simple-cdp";
 
-// wait for connection to be ready
-await cdp.ready;
-
-// add event listener triggered when a session is attached
+// add event listener triggered when a session is attached to a target
 cdp.Target.addEventListener("attachedToTarget", onAttachedToTarget);
 
-// send command to create a new target
+// create a new target
 const url = "https://example.com";
-const { targetId } = await cdp.Target.createTarget({ url });
 
-// send command to attach a session to the target
-await cdp.Target.attachToTarget({ targetId });
+// enable auto-attach to new targets
+await cdp.Target.setAutoAttach({
+    autoAttach: true,
+    flatten: true,
+    waitForDebuggerOnStart: false
+});
+await cdp.Target.createTarget({ url });
 
 async function onAttachedToTarget({ params }) {
     // get session ID
     const { sessionId } = params;
 
-    // send command to enable runtime
+    // enable "Runtime" domain
     await cdp.Runtime.enable(null, sessionId);
     
-    // send command to evaluate expression
+    // evaluate JavaScript expression
     const expression = "41 + 1";
     const { result } = await cdp.Runtime.evaluate({ expression }, sessionId);
     
@@ -66,9 +67,6 @@ const page = targets.find(target => target.type === "page");
 
 // set the webSocketDebuggerUrl option
 cdp.options.webSocketDebuggerUrl = page.webSocketDebuggerUrl;
-
-// wait for connection to be ready
-await cdp.ready;
 
 // add event listener triggered when a session is attached
 cdp.Target.addEventListener("attachedToTarget", onAttachedToTarget);
