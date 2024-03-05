@@ -3,7 +3,7 @@
     "description": "JavaScript library to interact with the Chrome DevTools Protocol",
     "author": "Gildas Lormeau",
     "license": "MIT",
-    "version": "1.1.23",
+    "version": "1.2.0",
     "type": "module",
     "keywords": [
         "cdp",
