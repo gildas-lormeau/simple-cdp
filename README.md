@@ -68,9 +68,6 @@ const page = targets.find(target => target.type === "page");
 // set the webSocketDebuggerUrl option
 cdp.options.webSocketDebuggerUrl = page.webSocketDebuggerUrl;
 
-// enable "Page" domain
-await cdp.Page.enable();
-
 // navigate to https://example.com
 const url = "https://example.com";
 await cdp.Page.navigate({ url });
