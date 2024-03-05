@@ -11,10 +11,6 @@ declare interface CDPMembers {
    */
   connection: CDPConnection;
   /**
-   * A promise that resolves when the connection is ready
-   */
-  ready: Promise<void>;
-  /**
    * Reset the connection
    */
   reset(): void;
