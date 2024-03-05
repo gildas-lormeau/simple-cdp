@@ -47,7 +47,7 @@ declare interface CDPOptions {
    */
   pathTargets: string;
   /**
-   * The WebSocket URL of the connection (#url and #path are ignored)
+   * The WebSocket URL of the connection
    */
   webSocketDebuggerUrl: string;
   /**
