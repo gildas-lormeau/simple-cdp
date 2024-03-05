@@ -78,15 +78,33 @@ declare interface CDPOptions {
    */
   path: string;
   /**
-   * The path of the connection targets
+   * The WebSocket URL of the connection
+   */
+  webSocketDebuggerUrl: string;
+  /**
+   * The path to get all targets
    *
    * @defaultValue "json"
    */
   pathTargets: string;
   /**
-   * The WebSocket URL of the connection
+   * The path to create new target
+   *
+   * @defaultValue "json/new"
    */
-  webSocketDebuggerUrl: string;
+  pathNewTarget: string;
+  /**
+   * The path to activate a ‡target
+   *
+   * @defaultValue "json/activate"
+   */
+  pathActivateTarget: string;
+  /**
+   * The path to close a target
+   *
+   * @defaultValue "json/close"
+   */
+  pathCloseTarget: string;
   /**
    * The maximum number of retries
    *
