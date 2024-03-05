@@ -15,23 +15,23 @@ declare interface CDPMembers {
    */
   reset(): void;
   /**
-   * Get the targets of the connection
+   * Get the targets
    */
   getTargets(): Promise<CDPTargetInfo[]>;
   /**
-   * Create a target of the connection
+   * Create a target
    *
    * @param url The URL of the target
    */
   createTarget(url: string): Promise<CDPTargetInfo>;
   /**
-   * Activate a target of the connection
+   * Activate a target
    *
    * @param targetId The ID of the target
    */
   activateTarget(targetId: string): Promise<void>;
   /**
-   * Close a target of the connection
+   * Close a target
    *
    * @param targetId The ID of the target
    */
