@@ -17,7 +17,48 @@ declare interface CDPMembers {
   /**
    * Get the targets of the connection
    */
-  getTargets(): Promise<object[]>;
+  getTargets(): Promise<TargetInfo[]>;
+  /**
+   * Create a target of the connection
+   *
+   * @param url The URL of the target
+   */
+  createTarget(url: string): Promise<TargetInfo>;
+  /**
+   * Activate a target of the connection
+   *
+   * @param targetId The ID of the target
+   */
+  activateTarget(targetId: string): Promise<void>;
+  /**
+   * Close a target of the connection
+   *
+   * @param targetId The ID of the target
+   */
+  closeTarget(targetId: string): Promise<void>;
+}
+
+declare interface TargetInfo {
+  /**
+   * The target ID
+   */
+  id: string;
+  /**
+   * The target type
+   */
+  type: string;
+  /**
+   * The target title
+   */
+  title: string;
+  /**
+   * The target URL
+   */
+  url: string;
+  /**
+   * The target WebSocket URL
+   */
+  webSocketDebuggerUrl: string;
 }
 
 /**
