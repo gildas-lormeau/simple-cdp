@@ -57,13 +57,19 @@ export default api;
 
 async function ready() {
     if (connection === UNDEFINED_VALUE) {
-        connection = await createConnection(options);
+        connection = await retry(async () => {
+            const connection = new Connection(options);
+            await connection.open();
+            return connection;
+        }, options.connectionMaxRetry, options.connectionRetryDelay);
     }
 }
 
-async function getTargets() {
-    const response = await fetch(new URL(options.pathTargets, options.url));
-    return response.json();
+function getTargets() {
+    return retry(async () => {
+        const response = await fetch(new URL(options.pathTargets, options.url));
+        return response.json();
+    }, options.connectionMaxRetry, options.connectionRetryDelay);
 }
 
 async function reset() {
@@ -142,15 +148,13 @@ class Connection extends EventTarget {
     }
 }
 
-async function createConnection(options, attemptCount = 0) {
-    const connection = new Connection(options);
+async function retry(fn, maxRetry = 20, retryDelay = 500, retryCount = 0) {
     try {
-        await connection.open();
-        return connection;
+        return await fn();
     } catch (error) {
-        if (attemptCount < options.connectionMaxRetry) {
-            await new Promise((resolve) => setTimeout(resolve, options.connectionRetryDelay));
-            return createConnection(options, attemptCount + 1);
+        if (retryCount < maxRetry) {
+            await new Promise((resolve) => setTimeout(resolve, retryDelay));
+            return retry(fn, maxRetry, retryDelay, retryCount + 1);
         } else {
             throw error;
         }
