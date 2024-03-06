@@ -92,8 +92,9 @@ function getTargets() {
     return fetchData(new URL(options.pathTargets, options.url));
 }
 
-function createTarget() {
-    return fetchData(new URL(options.pathNewTarget, options.url), "PUT");
+function createTarget(url) {
+    const path = url ? `${options.pathNewTarget}?url=${url}` : options.pathNewTarget;
+    return fetchData(new URL(path, options.url), "PUT");
 }
 
 async function activateTarget(targetId) {
