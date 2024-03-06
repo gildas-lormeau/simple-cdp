@@ -7,13 +7,6 @@ const CLOSE_EVENT = "close";
 const ERROR_EVENT = "error";
 const CONNECTION_REFUSED_ERROR_CODE = "ConnectionRefused";
 const EVENT_LISTENERS = ["addEventListener", "removeEventListener"];
-const OPTIONS_PROPERTY = "options";
-const CONNECTION_PROPERTY = "connection";
-const GET_TARGETS_PROPERTY = "getTargets";
-const CREATE_TARGET_PROPERTY = "createTarget";
-const ACTIVATE_TARGET_PROPERTY = "activateTarget";
-const CLOSE_TARGET_PROPERTY = "closeTarget";
-const RESET_PROPERTY = "reset";
 const DEFAULT_URL = "http://localhost:9222";
 const DEFAULT_PATH = "json/version";
 const DEFAULT_PATH_TARGETS = "json";
@@ -22,9 +15,7 @@ const PATH_ACTIVATE_TARGET = "json/activate";
 const PATH_CLOSE_TARGET = "json/close";
 const DEFAULT_CONNECTION_MAX_RETRY = 20;
 const DEFAULT_CONNECTION_RETRY_DELAY = 500;
-
-let connection;
-const options = {
+const DEFAULT_OPTIONS = {
     url: DEFAULT_URL,
     path: DEFAULT_PATH,
     pathTargets: DEFAULT_PATH_TARGETS,
@@ -34,85 +25,128 @@ const options = {
     connectionMaxRetry: DEFAULT_CONNECTION_MAX_RETRY,
     connectionRetryDelay: DEFAULT_CONNECTION_RETRY_DELAY
 };
-const pendingEventListenerCalls = [];
-const api = new Proxy(Object.create(null), {
-    get(target, domainName) {
-        if (!(domainName in target)) {
-            target[domainName] = new Proxy(Object.create(null), {
-                get(_, methodName) {
-                    if (EVENT_LISTENERS.includes(methodName)) {
-                        return (type, listener) => {
-                            if (connection === UNDEFINED_VALUE) {
-                                pendingEventListenerCalls.push({ methodName, domainName, type, listener });
-                            } else {
-                                connection[methodName](`${domainName}.${type}`, listener);
-                            }
-                        };
-                    } else {
-                        return async (params = {}, sessionId) => {
-                            await ready();
-                            if (pendingEventListenerCalls.length > 0) {
-                                for (const { methodName, domainName, type, listener } of pendingEventListenerCalls) {
-                                    connection[methodName](`${domainName}.${type}`, listener);
-                                }
-                                pendingEventListenerCalls.length = 0;
-                            }
-                            return connection.sendMessage(`${domainName}.${methodName}`, params, sessionId);
-                        };
-                    }
-                }
-            });
-        }
-        return target[domainName];
-    }
-});
-Object.defineProperty(api, OPTIONS_PROPERTY, {
-    get: () => options,
-    set: (value) => Object.assign(options, value)
-});
-Object.defineProperty(api, CONNECTION_PROPERTY, { get: () => connection });
-Object.defineProperty(api, RESET_PROPERTY, { value: reset });
-Object.defineProperty(api, GET_TARGETS_PROPERTY, { value: getTargets });
-Object.defineProperty(api, CREATE_TARGET_PROPERTY, { value: createTarget });
-Object.defineProperty(api, ACTIVATE_TARGET_PROPERTY, { value: activateTarget });
-Object.defineProperty(api, CLOSE_TARGET_PROPERTY, { value: closeTarget });
-export default api;
-
-async function ready() {
-    if (connection === UNDEFINED_VALUE) {
-        connection = await retry(async () => {
-            const connection = new Connection(options);
-            await connection.open();
-            return connection;
-        }, options.connectionMaxRetry, options.connectionRetryDelay);
-    }
-}
 
 function getTargets() {
-    return fetchData(new URL(options.pathTargets, options.url));
+    return CDP.getTargets();
 }
 
 function createTarget(url) {
-    const path = url ? `${options.pathNewTarget}?url=${url}` : options.pathNewTarget;
-    return fetchData(new URL(path, options.url), "PUT");
+    return CDP.createTarget(url);
 }
 
-async function activateTarget(targetId) {
-    await fetchData(new URL(`${options.pathActivateTarget}/${targetId}`, options.url));
+function activateTarget(targetId) {
+    return CDP.activateTarget(targetId);
 }
 
-async function closeTarget(targetId) {
-    await fetchData(new URL(`${options.pathCloseTarget}/${targetId}`, options.url));
+function closeTarget(targetId) {
+    return CDP.closeTarget(targetId);
 }
 
-async function reset() {
-    if (connection !== UNDEFINED_VALUE) {
-        connection.close();
-        connection = UNDEFINED_VALUE;
-        pendingEventListenerCalls.length = 0;
-        await ready();
+class CDP {
+    connection;
+    options = Object.assign({}, DEFAULT_OPTIONS);
+    #pendingEventListenerCalls = [];
+
+    constructor(options) {
+        // deno-lint-ignore no-this-alias
+        const cdp = this;
+        const proxy = new Proxy(Object.create(null), {
+            get(target, propertyName) {
+                if (propertyName in cdp) {
+                    return cdp[propertyName];
+                } else {
+                    if (propertyName in target) {
+                        return target[propertyName];
+                    } else {
+                        return getDomain(target, propertyName);
+                    }
+                }
+            }
+        });
+        cdp.options = Object.assign(cdp.options, options);
+        return proxy;
+
+        function getDomain(target, domainName) {
+            target[domainName] = new Proxy(Object.create(null), {
+                get(target, methodName) {
+                    return getDomainMethod(target, methodName, domainName);
+                }
+            });
+            return target[domainName];
+        }
+
+        function getDomainMethod(target, methodName, domainName) {
+            if (EVENT_LISTENERS.includes(methodName)) {
+                return (type, listener) => {
+                    if (cdp.connection === UNDEFINED_VALUE) {
+                        cdp.#pendingEventListenerCalls.push({ methodName, domainName, type, listener });
+                    } else {
+                        cdp.connection[methodName](`${domainName}.${type}`, listener);
+                    }
+                };
+            } else {
+                if (!(methodName in target)) {
+                    target[methodName] = getDomainMethodFunction(methodName, domainName);
+                }
+                return target[methodName];
+            }
+        }
+
+        function getDomainMethodFunction(methodName, domainName) {
+            return async (params = {}, sessionId) => {
+                await ready(cdp);
+                if (cdp.#pendingEventListenerCalls.length > 0) {
+                    for (const { methodName, domainName, type, listener } of cdp.#pendingEventListenerCalls) {
+                        cdp.connection[methodName](`${domainName}.${type}`, listener);
+                    }
+                    cdp.#pendingEventListenerCalls.length = 0;
+                }
+                return cdp.connection.sendMessage(`${domainName}.${methodName}`, params, sessionId);
+            };
+        }
+
+        async function ready(cdp) {
+            if (cdp.connection === UNDEFINED_VALUE) {
+                const connection = new Connection(cdp.options);
+                await retry(() => connection.open(), cdp.options);
+                cdp.connection = connection;
+            }
+        }
+    }
+    get options() {
+        return cdp.options;
+    }
+    set options(value) {
+        Object.assign(cdp.options, value);
+    }
+    reset() {
+        if (cdp.connection !== UNDEFINED_VALUE) {
+            cdp.connection.close();
+            cdp.connection = UNDEFINED_VALUE;
+            cdp.#pendingEventListenerCalls.length = 0;
+        }
+    }
+    static getTargets() {
+        const { pathTargets, url: baseUrl } = cdp.options;
+        return fetchDataWithRetry(new URL(pathTargets, baseUrl), cdp.options);
+    }
+    static createTarget(url) {
+        const { pathNewTarget, url: baseUrl } = cdp.options;
+        const path = url ? `${pathNewTarget}?url=${url}` : pathNewTarget;
+        return fetchDataWithRetry(new URL(path, baseUrl), cdp.options, "PUT");
+    }
+    static async activateTarget(targetId) {
+        const { pathActivateTarget, url: baseUrl } = cdp.options;
+        await fetchDataWithRetry(new URL(`${pathActivateTarget}/${targetId}`, baseUrl), cdp.options);
+    }
+    static async closeTarget(targetId) {
+        const { pathCloseTarget, url: baseUrl } = cdp.options;
+        await fetchDataWithRetry(new URL(`${pathCloseTarget}/${targetId}`, baseUrl)), cdp.options;
     }
 }
+
+const cdp = new CDP();
+export { cdp, CDP, getTargets, createTarget, activateTarget, closeTarget };
 
 class Connection extends EventTarget {
     #webSocket;
@@ -135,7 +169,7 @@ class Connection extends EventTarget {
     async open() {
         let webSocketDebuggerUrl;
         if (this.#webSocketDebuggerUrl === UNDEFINED_VALUE) {
-            const response = await fetch(new URL(this.#path, this.#url));
+            const response = await fetchData(new URL(this.#path, this.#url));
             ({ webSocketDebuggerUrl } = await response.json());
         } else {
             webSocketDebuggerUrl = this.#webSocketDebuggerUrl;
@@ -183,25 +217,34 @@ class Connection extends EventTarget {
     }
 }
 
-function fetchData(url, method) {
+function fetchDataWithRetry(url, options, method) {
     return retry(async () => {
-        const response = await fetch(url, { method });
+        const response = await fetchData(url, { method });
         if (response.status >= 400) {
             throw new Error(await response.text());
         } else {
             return response.json();
         }
-    });
+    }, options);
 }
 
-async function retry(fn, retryCount = 0) {
+async function fetchData(...args) {
+    try {
+        return await fetch(...args);
+    } catch (error) {
+        error.code = CONNECTION_REFUSED_ERROR_CODE;
+        throw error;
+    }
+}
+
+async function retry(fn, options, retryCount = 0) {
     const { connectionMaxRetry, connectionRetryDelay } = options;
     try {
         return await fn();
     } catch (error) {
         if (error.code == CONNECTION_REFUSED_ERROR_CODE && retryCount < connectionMaxRetry) {
             await new Promise((resolve) => setTimeout(resolve, connectionRetryDelay));
-            return retry(fn, retryCount + 1);
+            return retry(fn, options, retryCount + 1);
         } else {
             throw error;
         }

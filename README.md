@@ -24,10 +24,7 @@ Start a Chromium-based browser with the switch `--remote-debugging-port=9222` an
 
 ```js
 // import the module (replace with "simple-cdp" if using NPM)
-import cdp from "@simple-cdp/simple-cdp";
-
-// add event listener triggered when a session is attached to a target
-cdp.Target.addEventListener("attachedToTarget", onAttachedToTarget);
+import { cdp } from "@simple-cdp/simple-cdp";
 
 // enable auto-attach to new targets
 await cdp.Target.setAutoAttach({
@@ -36,41 +33,43 @@ await cdp.Target.setAutoAttach({
     waitForDebuggerOnStart: false
 });
 
+// add event listener triggered when a session is attached to a target
+cdp.Target.addEventListener("attachedToTarget", onAttachedToTarget);
+
 // create a new target and navigate to https://example.com
 const url = "https://example.com";
 await cdp.Target.createTarget({ url });
 
 async function onAttachedToTarget({ params }) {
     // get session ID
-    const { sessionId } = params;
+    const { sessionId, targetInfo } = params;
 
-    // enable "Runtime" domain
-    await cdp.Runtime.enable(null, sessionId);
-    
-    // evaluate JavaScript expression
-    const expression = "41 + 1";
-    const { result } = await cdp.Runtime.evaluate({ expression }, sessionId);
-    
-    // display result in the console (i.e. 42)
-    console.log(result.value);
+    // check if the target is a page
+    if (targetInfo.type === "page") {
+        // enable "Runtime" domain
+        await cdp.Runtime.enable(null, sessionId);
+
+        // evaluate JavaScript expression
+        const expression = "41 + 1";
+        const { result } = await cdp.Runtime.evaluate({ expression }, sessionId);
+
+        // display result in the console (i.e. 42)
+        console.log(result.value);
+    }
 }
 ```
 
-You can also set the `webSocketDebuggerUrl` option directly, thus avoiding the need to manage the session ID.
+You can also create a `CDP` instance from the target's information, which eliminates the need to manage the session ID.
 ```js
 // import the module (replace with "simple-cdp" if using NPM)
-import cdp from "@simple-cdp/simple-cdp";
-
-// find the first page target
-const targets = await cdp.getTargets();
-const page = targets.find(target => target.type === "page");
-
-// set the webSocketDebuggerUrl option
-cdp.options.webSocketDebuggerUrl = page.webSocketDebuggerUrl;
+import { createTarget, CDP } from "@simple-cdp/simple-cdp";
 
 // navigate to https://example.com
 const url = "https://example.com";
-await cdp.Page.navigate({ url });
+const targetInfo = await createTarget(url);
+
+// create a CDP instance for the target
+const cdp = new CDP(targetInfo);
 
 // enable "Runtime" domain
 await cdp.Runtime.enable();

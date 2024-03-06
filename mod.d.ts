@@ -234,6 +234,17 @@ declare type CDP = CDPMembers & CDPDomains;
 /**
  * API object
  */
-declare const api: CDP;
+declare const cdp: CDP;
 
-export default api;
+/**
+ * Close a target
+ *
+ * @param targetId The ID of the target
+ */
+
+declare const getTargets: CDPMembers["getTargets"];
+declare const createTarget: CDPMembers["createTarget"];
+declare const activateTarget: CDPMembers["activateTarget"];
+declare const closeTarget: CDPMembers["closeTarget"];
+
+export { activateTarget, CDP, cdp, closeTarget, createTarget, getTargets };
