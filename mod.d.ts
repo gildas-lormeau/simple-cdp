@@ -157,7 +157,7 @@ declare interface CDPDomainListeners {
 /**
  * Domain methods (e.g. "enable", "disable"...)
  */
-declare type CDPDomainMembers = {
+declare type CDPDomainMethods = {
   /**
    * Method of the domain
    *
@@ -174,7 +174,7 @@ declare type CDPDomainMembers = {
 /**
  * Domain of the API (e.g. "Page", "Target", "Runtime"...)
  */
-declare type CDPDomain = CDPDomainListeners & CDPDomainMembers;
+declare type CDPDomain = CDPDomainListeners & CDPDomainMethods;
 
 /**
  * Members of the API
