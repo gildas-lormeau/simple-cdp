@@ -179,7 +179,7 @@ declare type CDPDomain = CDPDomainListeners & CDPDomainMethods;
 /**
  * Members of the API
  */
-declare interface CDPMembers {
+declare class CDPMembers {
   /**
    * The options
    */
@@ -204,25 +204,13 @@ declare type CDPDomainPropertyKey = Capitalize<
 /**
  * API type
  */
-declare class CDP {
+declare class CDP extends CDPMembers {
   /*
    * Create a new instance
    *
    * @param options The options
    */
   constructor(options?: CDPOptions);
-  /**
-   * The options
-   */
-  options: CDPOptions;
-  /**
-   * The connection object
-   */
-  connection: CDPConnection;
-  /**
-   * Reset the connection
-   */
-  reset(): void;
   /**
    * The domains (e.g. "Page", "Target", "Runtime"...)
    */
