@@ -66,10 +66,10 @@ import { createTarget, CDP } from "@simple-cdp/simple-cdp";
 
 // navigate to https://example.com
 const url = "https://example.com";
-const targetInfo = await createTarget(url);
+const { webSocketDebuggerUrl } = await createTarget(url);
 
 // create a CDP instance for the target
-const cdp = new CDP(targetInfo);
+const cdp = new CDP({ webSocketDebuggerUrl });
 
 // enable "Runtime" domain
 await cdp.Runtime.enable();
