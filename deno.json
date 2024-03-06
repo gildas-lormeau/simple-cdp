@@ -1,5 +1,5 @@
 {
 	"name": "@simple-cdp/simple-cdp",
-	"version": "1.4.4",
+	"version": "1.4.5",
 	"exports": "./mod.js"
 }
