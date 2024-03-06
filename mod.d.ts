@@ -131,7 +131,7 @@ declare type CDPEventListener = (evt: CDPEvent) => void | Promise<void>;
 /**
  * Domain event listener registration methods
  */
-declare interface CDPDomainListeners {
+declare class CDPDomainListeners {
   /**
    * Add an event listener
    *
