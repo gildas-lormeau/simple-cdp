@@ -236,12 +236,6 @@ declare type CDP = CDPMembers & CDPDomains;
  */
 declare const cdp: CDP;
 
-/**
- * Close a target
- *
- * @param targetId The ID of the target
- */
-
 declare const getTargets: CDPMembers["getTargets"];
 declare const createTarget: CDPMembers["createTarget"];
 declare const activateTarget: CDPMembers["activateTarget"];
