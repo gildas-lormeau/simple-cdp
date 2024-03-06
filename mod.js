@@ -16,12 +16,12 @@ const PATH_CLOSE_TARGET = "json/close";
 const DEFAULT_CONNECTION_MAX_RETRY = 20;
 const DEFAULT_CONNECTION_RETRY_DELAY = 500;
 const DEFAULT_OPTIONS = {
-    url: DEFAULT_URL,
-    path: DEFAULT_PATH,
-    pathTargets: DEFAULT_PATH_TARGETS,
-    pathNewTarget: PATH_NEW_TARGET,
-    pathActivateTarget: PATH_ACTIVATE_TARGET,
-    pathCloseTarget: PATH_CLOSE_TARGET,
+    apiUrl: DEFAULT_URL,
+    apiPath: DEFAULT_PATH,
+    apiPathTargets: DEFAULT_PATH_TARGETS,
+    apiPathNewTarget: PATH_NEW_TARGET,
+    apiPathActivateTarget: PATH_ACTIVATE_TARGET,
+    apiPathCloseTarget: PATH_CLOSE_TARGET,
     connectionMaxRetry: DEFAULT_CONNECTION_MAX_RETRY,
     connectionRetryDelay: DEFAULT_CONNECTION_RETRY_DELAY
 };
@@ -127,21 +127,21 @@ class CDP {
         }
     }
     static getTargets() {
-        const { pathTargets, url: baseUrl } = cdp.options;
-        return fetchDataWithRetry(new URL(pathTargets, baseUrl), cdp.options);
+        const { apiPathTargets, apiUrl } = cdp.options;
+        return fetchDataWithRetry(new URL(apiPathTargets, apiUrl), cdp.options);
     }
     static createTarget(url) {
-        const { pathNewTarget, url: baseUrl } = cdp.options;
-        const path = url ? `${pathNewTarget}?${url}` : pathNewTarget;
-        return fetchDataWithRetry(new URL(path, baseUrl), cdp.options, "PUT");
+        const { apiPathNewTarget, apiUrl } = cdp.options;
+        const path = url ? `${apiPathNewTarget}?${url}` : apiPathNewTarget;
+        return fetchDataWithRetry(new URL(path, apiUrl), cdp.options, "PUT");
     }
     static async activateTarget(targetId) {
-        const { pathActivateTarget, url: baseUrl } = cdp.options;
-        await fetchDataWithRetry(new URL(`${pathActivateTarget}/${targetId}`, baseUrl), cdp.options);
+        const { apiPathActivateTarget, apiUrl } = cdp.options;
+        await fetchDataWithRetry(new URL(`${apiPathActivateTarget}/${targetId}`, apiUrl), cdp.options);
     }
     static async closeTarget(targetId) {
-        const { pathCloseTarget, url: baseUrl } = cdp.options;
-        await fetchDataWithRetry(new URL(`${pathCloseTarget}/${targetId}`, baseUrl)), cdp.options;
+        const { apiPathCloseTarget, apiUrl } = cdp.options;
+        await fetchDataWithRetry(new URL(`${apiPathCloseTarget}/${targetId}`, apiUrl)), cdp.options;
     }
 }
 
@@ -150,8 +150,8 @@ export { cdp, CDP, getTargets, createTarget, activateTarget, closeTarget };
 
 class Connection extends EventTarget {
     #webSocket;
-    #url;
-    #path;
+    #apiUrl;
+    #apiPath;
     #webSocketDebuggerUrl;
     #pendingRequests = new Map();
     #nextRequestId = 0;
@@ -159,8 +159,8 @@ class Connection extends EventTarget {
     constructor(options = {}) {
         super();
         if (options.webSocketDebuggerUrl === UNDEFINED_VALUE) {
-            this.#url = options.url;
-            this.#path = options.path;
+            this.#apiUrl = options.apiUrl;
+            this.#apiPath = options.apiPath;
         } else {
             this.#webSocketDebuggerUrl = options.webSocketDebuggerUrl;
         }
@@ -169,7 +169,7 @@ class Connection extends EventTarget {
     async open() {
         let webSocketDebuggerUrl;
         if (this.#webSocketDebuggerUrl === UNDEFINED_VALUE) {
-            const response = await fetchData(new URL(this.#path, this.#url));
+            const response = await fetchData(new URL(this.#apiPath, this.#apiUrl));
             ({ webSocketDebuggerUrl } = await response.json());
         } else {
             webSocketDebuggerUrl = this.#webSocketDebuggerUrl;

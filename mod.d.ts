@@ -1,26 +1,3 @@
-declare interface CDPTargetInfo {
-  /**
-   * The target ID
-   */
-  id: string;
-  /**
-   * The target type
-   */
-  type: string;
-  /**
-   * The target title
-   */
-  title: string;
-  /**
-   * The target URL
-   */
-  url: string;
-  /**
-   * The target WebSocket URL
-   */
-  webSocketDebuggerUrl: string;
-}
-
 /**
  * Options of the connection
  */
@@ -30,13 +7,13 @@ declare interface CDPOptions {
    *
    * @defaultValue "http://localhost:9222"
    */
-  url: string;
+  apiUrl: string;
   /**
    * The path of the connection
    *
    * @defaultValue "json/version"
    */
-  path: string;
+  apiPath: string;
   /**
    * The WebSocket URL of the connection
    */
@@ -46,25 +23,25 @@ declare interface CDPOptions {
    *
    * @defaultValue "json"
    */
-  pathTargets: string;
+  apiPathTargets: string;
   /**
    * The path to create new target
    *
    * @defaultValue "json/new"
    */
-  pathNewTarget: string;
+  apiPathNewTarget: string;
   /**
    * The path to activate a ‡target
    *
    * @defaultValue "json/activate"
    */
-  pathActivateTarget: string;
+  apiPathActivateTarget: string;
   /**
    * The path to close a target
    *
    * @defaultValue "json/close"
    */
-  pathCloseTarget: string;
+  apiPathCloseTarget: string;
   /**
    * The maximum number of retries
    *
@@ -208,6 +185,32 @@ declare class CDPMembers {
 declare type CDPDomainPropertyKey = Capitalize<
   Exclude<string, keyof CDPMembers>
 >;
+
+/**
+ * Target info
+ */
+declare interface CDPTargetInfo {
+  /**
+   * The target ID
+   */
+  id: string;
+  /**
+   * The target type
+   */
+  type: string;
+  /**
+   * The target title
+   */
+  title: string;
+  /**
+   * The target URL
+   */
+  url: string;
+  /**
+   * The target WebSocket URL
+   */
+  webSocketDebuggerUrl: string;
+}
 
 /**
  * API
