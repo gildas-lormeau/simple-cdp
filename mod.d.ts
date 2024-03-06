@@ -120,7 +120,7 @@ declare interface CDPOptions {
 }
 
 /**
- * Connection class
+ * Connection interface
  */
 declare interface CDPConnection {
   /**
