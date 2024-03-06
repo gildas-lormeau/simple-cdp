@@ -2,6 +2,12 @@
  * API methods and properties
  */
 declare class CDPMembers {
+  /*
+   * Create a new instance of the connection
+   *
+   * @param options The options of the connection
+   */
+  constructor(options: CDPOptions);
   /**
    * The options of the connection
    */
