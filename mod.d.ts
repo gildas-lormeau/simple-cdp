@@ -202,7 +202,7 @@ declare type CDPDomainPropertyKey = Capitalize<
 >;
 
 /**
- * API type
+ * API
  */
 declare class CDP extends CDPMembers {
   /*
