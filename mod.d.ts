@@ -1,49 +1,3 @@
-/**
- * API methods and properties
- */
-declare class CDPMembers {
-  /*
-   * Create a new instance of the connection
-   *
-   * @param options The options of the connection
-   */
-  constructor(options: CDPOptions);
-  /**
-   * The options of the connection
-   */
-  options: CDPOptions;
-  /**
-   * The connection object
-   */
-  connection: CDPConnection;
-  /**
-   * Reset the connection
-   */
-  reset(): void;
-  /**
-   * Get the targets
-   */
-  static getTargets(): Promise<CDPTargetInfo[]>;
-  /**
-   * Create a target
-   *
-   * @param url The URL of the target
-   */
-  static createTarget(url?: string): Promise<CDPTargetInfo>;
-  /**
-   * Activate a target
-   *
-   * @param targetId The ID of the target
-   */
-  static activateTarget(targetId: string): Promise<void>;
-  /**
-   * Close a target
-   *
-   * @param targetId The ID of the target
-   */
-  static closeTarget(targetId: string): Promise<void>;
-}
-
 declare interface CDPTargetInfo {
   /**
    * The target ID
@@ -212,7 +166,7 @@ declare type CDPDomainMembers = {
    * @returns The result
    */
   [Key in Exclude<string, keyof CDPDomainListeners> as Uncapitalize<Key>]: (
-    args: object | null,
+    args?: object | null,
     sessionId?: string,
   ) => Promise<object>;
 };
@@ -223,28 +177,85 @@ declare type CDPDomainMembers = {
 declare type CDPDomain = CDPDomainListeners & CDPDomainMembers;
 
 /**
+ * Members of the API
+ */
+declare interface CDPMembers {
+  options: CDPOptions;
+  connection: CDPConnection;
+  reset(): void;
+}
+
+declare type CDPDomainProperty = Capitalize<Exclude<string, keyof CDPMembers>>;
+
+/**
  * Domains of the API
  */
 declare type CDPDomains = {
   /**
    * Domain
    */
-  [Key in string as Capitalize<Key>]: CDPDomain;
+  [Key in CDPDomainProperty as Exclude<CDPDomainProperty, keyof CDPMembers>]:
+    CDPDomain;
 };
 
 /**
- * API
+ * API type
  */
-declare type CDP = CDPMembers & CDPDomains;
+declare class CDP implements CDPDomains {
+  /*
+   * Create a new instance
+   *
+   * @param options The options
+   */
+  constructor(options?: CDPOptions);
+  /**
+   * The options
+   */
+  options: CDPOptions;
+  /**
+   * The connection object
+   */
+  connection: CDPConnection;
+  /**
+   * Reset the connection
+   */
+  reset(): void;
+  /**
+   * The domains (e.g. "Page", "Target", "Runtime"...)
+   */
+  [key: CDPDomainProperty]: CDPDomain;
+  /**
+   * Get the targets
+   */
+  static getTargets(): Promise<CDPTargetInfo[]>;
+  /**
+   * Create a target
+   *
+   * @param url The URL of the target
+   */
+  static createTarget(url?: string): Promise<CDPTargetInfo>;
+  /**
+   * Activate a target
+   *
+   * @param targetId The ID of the target
+   */
+  static activateTarget(targetId: string): Promise<void>;
+  /**
+   * Close a target
+   *
+   * @param targetId The ID of the target
+   */
+  static closeTarget(targetId: string): Promise<void>;
+}
 
 /**
  * API object
  */
 declare const cdp: CDP;
 
-declare const getTargets: typeof CDPMembers.getTargets;
-declare const createTarget: typeof CDPMembers.createTarget;
-declare const activateTarget: typeof CDPMembers.activateTarget;
-declare const closeTarget: typeof CDPMembers.closeTarget;
+declare const getTargets: typeof CDP.getTargets;
+declare const createTarget: typeof CDP.createTarget;
+declare const activateTarget: typeof CDP.activateTarget;
+declare const closeTarget: typeof CDP.closeTarget;
 
 export { activateTarget, CDP, cdp, closeTarget, createTarget, getTargets };
