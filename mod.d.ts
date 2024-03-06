@@ -194,7 +194,7 @@ declare type CDPDomains = {
   /**
    * Domain
    */
-  [Key in CDPDomainProperty as CDPDomainProperty]: CDPDomain;
+  [Key in CDPDomainProperty]: CDPDomain;
 };
 
 /**
