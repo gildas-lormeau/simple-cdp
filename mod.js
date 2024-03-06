@@ -43,7 +43,7 @@ const api = new Proxy(Object.create(null), {
                     if (EVENT_LISTENERS.includes(methodName)) {
                         return (type, listener) => {
                             if (connection === UNDEFINED_VALUE) {
-                                pendingEventListenerCalls.push({ methodName, type, listener });
+                                pendingEventListenerCalls.push({ methodName, domainName, type, listener });
                             } else {
                                 connection[methodName](`${domainName}.${type}`, listener);
                             }
@@ -52,7 +52,7 @@ const api = new Proxy(Object.create(null), {
                         return async (params = {}, sessionId) => {
                             await ready();
                             if (pendingEventListenerCalls.length > 0) {
-                                for (const { methodName, type, listener } of pendingEventListenerCalls) {
+                                for (const { methodName, domainName, type, listener } of pendingEventListenerCalls) {
                                     connection[methodName](`${domainName}.${type}`, listener);
                                 }
                                 pendingEventListenerCalls.length = 0;
