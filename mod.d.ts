@@ -85,6 +85,8 @@ declare interface CDPOptions {
 declare interface CDPConnection {
   /**
    * Open the connection
+   *
+   * @returns A promise that resolves when the connection is opened
    */
   open(): Promise<void>;
   /**
@@ -93,6 +95,7 @@ declare interface CDPConnection {
    * @param method The method of the message
    * @param params The parameters of the message
    * @param sesssionId The session ID of the message
+   * @returns The response
    */
   sendMessage(
     method: string,
@@ -101,6 +104,8 @@ declare interface CDPConnection {
   ): Promise<object>;
   /**
    * Close the connection
+   *
+   * @returns A promise that resolves when the connection is closed
    */
   close(): void;
 }
@@ -125,8 +130,11 @@ declare interface CDPEvent {
 
 /**
  * Function of domain event listeners
+ *
+ * @param event The event
+ * @returns The result
  */
-declare type CDPEventListener = (evt: CDPEvent) => void | Promise<void>;
+declare type CDPEventListener = (event: CDPEvent) => void | Promise<void>;
 
 /**
  * Domain event listener registration methods
@@ -205,7 +213,7 @@ declare type CDPDomainPropertyKey = Capitalize<
  * API
  */
 declare class CDP extends CDPMembers {
-  /*
+  /**
    * Create a new instance
    *
    * @param options The options
@@ -217,24 +225,30 @@ declare class CDP extends CDPMembers {
   [key: CDPDomainPropertyKey]: CDPDomain;
   /**
    * Get the targets
+   *
+   * @returns The targets
    */
   static getTargets(): Promise<CDPTargetInfo[]>;
   /**
    * Create a target
    *
    * @param url The URL of the target
+   *
+   * @returns The target info
    */
   static createTarget(url?: string): Promise<CDPTargetInfo>;
   /**
    * Activate a target
    *
    * @param targetId The ID of the target
+   * @returns A promise that resolves when the target is activated
    */
   static activateTarget(targetId: string): Promise<void>;
   /**
    * Close a target
    *
    * @param targetId The ID of the target
+   * @returns A promise that resolves when the target is closed
    */
   static closeTarget(targetId: string): Promise<void>;
 }
