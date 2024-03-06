@@ -194,8 +194,7 @@ declare type CDPDomains = {
   /**
    * Domain
    */
-  [Key in CDPDomainProperty as Exclude<CDPDomainProperty, keyof CDPMembers>]:
-    CDPDomain;
+  [Key in CDPDomainProperty as CDPDomainProperty]: CDPDomain;
 };
 
 /**
