@@ -23,7 +23,7 @@ declare interface CDPMembers {
    *
    * @param url The URL of the target
    */
-  createTarget(url: string): Promise<CDPTargetInfo>;
+  createTarget(url?: string): Promise<CDPTargetInfo>;
   /**
    * Activate a target
    *
