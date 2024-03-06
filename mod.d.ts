@@ -247,9 +247,21 @@ declare class CDP {
  */
 declare const cdp: CDP;
 
+/**
+ * Get the targets
+ */
 declare const getTargets: typeof CDP.getTargets;
+/**
+ * Create a target
+ */
 declare const createTarget: typeof CDP.createTarget;
+/**
+ * Activate a target
+ */
 declare const activateTarget: typeof CDP.activateTarget;
+/**
+ * Close a target
+ */
 declare const closeTarget: typeof CDP.closeTarget;
 
 export { activateTarget, CDP, cdp, closeTarget, createTarget, getTargets };
