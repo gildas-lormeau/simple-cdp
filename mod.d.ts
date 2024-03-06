@@ -185,7 +185,12 @@ declare interface CDPMembers {
   reset(): void;
 }
 
-declare type CDPDomainProperty = Capitalize<Exclude<string, keyof CDPMembers>>;
+/**
+ * Property key of a domain
+ */
+declare type CDPDomainPropertyKey = Capitalize<
+  Exclude<string, keyof CDPMembers>
+>;
 
 /**
  * API type
@@ -212,7 +217,7 @@ declare class CDP {
   /**
    * The domains (e.g. "Page", "Target", "Runtime"...)
    */
-  [key: CDPDomainProperty]: CDPDomain;
+  [key: CDPDomainPropertyKey]: CDPDomain;
   /**
    * Get the targets
    */
