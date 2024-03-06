@@ -132,7 +132,7 @@ class CDP {
     }
     static createTarget(url) {
         const { pathNewTarget, url: baseUrl } = cdp.options;
-        const path = url ? `${pathNewTarget}?url=${url}` : pathNewTarget;
+        const path = url ? `${pathNewTarget}?${url}` : pathNewTarget;
         return fetchDataWithRetry(new URL(path, baseUrl), cdp.options, "PUT");
     }
     static async activateTarget(targetId) {
