@@ -2,6 +2,12 @@
  * API methods and properties
  */
 declare class CDPMembers {
+  /*
+   * Create a new instance of the connection
+   *
+   * @param options The options of the connection
+   */
+  constructor(options: CDPOptions);
   /**
    * The options of the connection
    */
@@ -120,7 +126,7 @@ declare interface CDPOptions {
 }
 
 /**
- * Connection interface
+ * Connection class
  */
 declare interface CDPConnection {
   /**
@@ -217,33 +223,19 @@ declare type CDPDomainMembers = {
 declare type CDPDomain = CDPDomainListeners & CDPDomainMembers;
 
 /**
- * Property name of the domain
- */
-declare type CDPDomainPropertyName = Capitalize<string>;
-
-/**
  * Domains of the API
  */
 declare type CDPDomains = {
   /**
    * Domain
    */
-  [Key in string as CDPDomainPropertyName]: CDPDomain;
+  [Key in string as Capitalize<Key>]: CDPDomain;
 };
 
 /**
  * API
  */
-declare class CDP extends CDPMembers implements CDPDomains {
-  /**
-   * Create a new instance of the connection
-   *
-   * @param options The options of the connection
-   */
-  constructor(options: CDPOptions);
-
-  [Key: CDPDomainPropertyName]: CDPDomain;
-}
+declare type CDP = CDPMembers & CDPDomains;
 
 /**
  * API object
