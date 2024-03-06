@@ -188,19 +188,9 @@ declare interface CDPMembers {
 declare type CDPDomainProperty = Capitalize<Exclude<string, keyof CDPMembers>>;
 
 /**
- * Domains of the API
- */
-declare type CDPDomains = {
-  /**
-   * Domain
-   */
-  [Key in CDPDomainProperty]: CDPDomain;
-};
-
-/**
  * API type
  */
-declare class CDP implements CDPDomains {
+declare class CDP {
   /*
    * Create a new instance
    *
