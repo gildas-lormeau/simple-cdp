@@ -180,8 +180,17 @@ declare type CDPDomain = CDPDomainListeners & CDPDomainMethods;
  * Members of the API
  */
 declare interface CDPMembers {
+  /**
+   * The options
+   */
   options: CDPOptions;
+  /**
+   * The connection object
+   */
   connection: CDPConnection;
+  /**
+   * Reset the connection
+   */
   reset(): void;
 }
 
