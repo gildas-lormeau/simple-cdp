@@ -1,7 +1,7 @@
 /**
  * API methods and properties
  */
-declare interface CDPMembers {
+declare class CDPMembers {
   /**
    * The options of the connection
    */
@@ -17,25 +17,25 @@ declare interface CDPMembers {
   /**
    * Get the targets
    */
-  getTargets(): Promise<CDPTargetInfo[]>;
+  static getTargets(): Promise<CDPTargetInfo[]>;
   /**
    * Create a target
    *
    * @param url The URL of the target
    */
-  createTarget(url?: string): Promise<CDPTargetInfo>;
+  static createTarget(url?: string): Promise<CDPTargetInfo>;
   /**
    * Activate a target
    *
    * @param targetId The ID of the target
    */
-  activateTarget(targetId: string): Promise<void>;
+  static activateTarget(targetId: string): Promise<void>;
   /**
    * Close a target
    *
    * @param targetId The ID of the target
    */
-  closeTarget(targetId: string): Promise<void>;
+  static closeTarget(targetId: string): Promise<void>;
 }
 
 declare interface CDPTargetInfo {
@@ -236,9 +236,9 @@ declare type CDP = CDPMembers & CDPDomains;
  */
 declare const cdp: CDP;
 
-declare const getTargets: CDPMembers["getTargets"];
-declare const createTarget: CDPMembers["createTarget"];
-declare const activateTarget: CDPMembers["activateTarget"];
-declare const closeTarget: CDPMembers["closeTarget"];
+declare const getTargets: typeof CDPMembers.getTargets;
+declare const createTarget: typeof CDPMembers.createTarget;
+declare const activateTarget: typeof CDPMembers.activateTarget;
+declare const closeTarget: typeof CDPMembers.closeTarget;
 
 export { activateTarget, CDP, cdp, closeTarget, createTarget, getTargets };
