@@ -80,7 +80,7 @@ declare interface CDPConnection {
   /**
    * Open the connection
    *
-   * @returns A promise that resolves when the connection is opened
+   * @return A promise that resolves when the connection is opened
    */
   open(): Promise<void>;
   /**
@@ -89,7 +89,7 @@ declare interface CDPConnection {
    * @param method The method of the message
    * @param params The parameters of the message
    * @param sesssionId The session ID of the message
-   * @returns The response
+   * @return The response
    */
   sendMessage(
     method: string,
@@ -100,7 +100,7 @@ declare interface CDPConnection {
   /**
    * Close the connection
    *
-   * @returns A promise that resolves when the connection is closed
+   * @return A promise that resolves when the connection is closed
    */
   close(): void;
 }
@@ -128,7 +128,7 @@ declare interface CDPEvent {
  * Function of domain event listeners
  *
  * @param event The event
- * @returns The result
+ * @return The result
  */
 declare type CDPEventListener = (event: CDPEvent) => void | Promise<void>;
 
@@ -167,7 +167,7 @@ declare type CDPDomainMethods = {
    *
    * @param args The arguments
    * @param sessionId The session ID
-   * @returns The result
+   * @return The result
    */
   [Key in Exclude<string, keyof CDPDomainListeners> as Uncapitalize<Key>]: (
     args?: CDPObject | null,
@@ -249,7 +249,7 @@ declare class CDP extends CDPMembers {
   /**
    * Get the targets
    *
-   * @returns The targets
+   * @return The targets
    */
   static getTargets(): Promise<CDPTargetInfo[]>;
   /**
@@ -257,21 +257,21 @@ declare class CDP extends CDPMembers {
    *
    * @param url The URL of the target
    *
-   * @returns The target info
+   * @return The target info
    */
   static createTarget(url?: string): Promise<CDPTargetInfo>;
   /**
    * Activate a target
    *
    * @param targetId The ID of the target
-   * @returns A promise that resolves when the target is activated
+   * @return A promise that resolves when the target is activated
    */
   static activateTarget(targetId: string): Promise<void>;
   /**
    * Close a target
    *
    * @param targetId The ID of the target
-   * @returns A promise that resolves when the target is closed
+   * @return A promise that resolves when the target is closed
    */
   static closeTarget(targetId: string): Promise<void>;
 }
