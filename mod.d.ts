@@ -57,6 +57,23 @@ declare interface CDPOptions {
 }
 
 /**
+ * Value of a plain object
+ */
+declare type CDPObjectValue =
+  | string
+  | number
+  | boolean
+  | CDPObject
+  | CDPObjectValue[];
+
+/**
+ * Plain object
+ */
+declare interface CDPObject {
+  [key: string]: CDPObjectValue;
+}
+
+/**
  * Connection
  */
 declare interface CDPConnection {
@@ -76,9 +93,9 @@ declare interface CDPConnection {
    */
   sendMessage(
     method: string,
-    params: object,
+    params: CDPObject,
     sesssionId?: string,
-  ): Promise<object>;
+  ): Promise<CDPObject>;
   /**
    * Close the connection
    *
@@ -98,7 +115,7 @@ declare interface CDPEvent {
   /**
    * The parameters
    */
-  params: object;
+  params: CDPObject;
   /**
    * The session ID
    */
@@ -151,9 +168,9 @@ declare type CDPDomainMethods = {
    * @returns The result
    */
   [Key in Exclude<string, keyof CDPDomainListeners> as Uncapitalize<Key>]: (
-    args?: object | null,
+    args?: CDPObject | null,
     sessionId?: string,
-  ) => Promise<object>;
+  ) => Promise<CDPObject>;
 };
 
 /**
