@@ -84,7 +84,7 @@ declare interface CDPConnection {
    */
   open(): Promise<void>;
   /**
-   * Send a message to the connection
+   * Send a message
    *
    * @param method The method of the message
    * @param params The parameters of the message
