@@ -70,7 +70,7 @@ declare type CDPValue =
  * Object type used in the CDP API
  */
 declare interface CDPObject {
-  [k: string]: CDPValue;
+  [key: string]: CDPValue;
 }
 
 /**
