@@ -51,7 +51,8 @@ async function onAttachedToTarget({ params }) {
 
     // evaluate JavaScript expression
     const expression = "41 + 1";
-    const { result } = await cdp.Runtime.evaluate({ expression }, sessionId);
+    const { result } = await cdp.Runtime.evaluate(
+      { expression }, sessionId);
 
     // display result in the console (i.e. 42)
     console.log(result.value);
