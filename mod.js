@@ -94,7 +94,7 @@ class CDP {
 
         function getDomainMethodFunction(methodName, domainName) {
             return async (params = {}, sessionId) => {
-                await ready(cdp);
+                await ready();
                 if (cdp.#pendingEventListenerCalls.length > 0) {
                     for (const { methodName, domainName, type, listener } of cdp.#pendingEventListenerCalls) {
                         cdp.connection[methodName](`${domainName}.${type}`, listener);
@@ -105,7 +105,7 @@ class CDP {
             };
         }
 
-        async function ready(cdp) {
+        async function ready() {
             if (cdp.connection === UNDEFINED_VALUE) {
                 const connection = new Connection(cdp.options);
                 await retry(() => connection.open(), cdp.options);
@@ -114,16 +114,16 @@ class CDP {
         }
     }
     get options() {
-        return cdp.options;
+        return this.options;
     }
     set options(value) {
-        Object.assign(cdp.options, value);
+        Object.assign(cthisdp.options, value);
     }
     reset() {
-        if (cdp.connection !== UNDEFINED_VALUE) {
-            cdp.connection.close();
-            cdp.connection = UNDEFINED_VALUE;
-            cdp.#pendingEventListenerCalls.length = 0;
+        if (this.connection !== UNDEFINED_VALUE) {
+            this.connection.close();
+            this.connection = UNDEFINED_VALUE;
+            this.#pendingEventListenerCalls.length = 0;
         }
     }
     static getTargets() {
