@@ -76,20 +76,24 @@ class CDP {
         }
 
         function getDomainMethod(target, methodName, domainName) {
-            if (EVENT_LISTENERS.includes(methodName)) {
-                return (type, listener) => {
-                    if (cdp.connection === UNDEFINED_VALUE) {
-                        cdp.#pendingEventListenerCalls.push({ methodName, domainName, type, listener });
-                    } else {
-                        cdp.connection[methodName](`${domainName}.${type}`, listener);
-                    }
-                };
-            } else {
-                if (!(methodName in target)) {
+            if (!(methodName in target)) {
+                if (EVENT_LISTENERS.includes(methodName)) {
+                    target[methodName] = getDomainListenerFunction(methodName, domainName);
+                } else {
                     target[methodName] = getDomainMethodFunction(methodName, domainName);
                 }
-                return target[methodName];
             }
+            return target[methodName];
+        }
+
+        function getDomainListenerFunction(methodName, domainName) {
+            return (type, listener) => {
+                if (cdp.connection === UNDEFINED_VALUE) {
+                    cdp.#pendingEventListenerCalls.push({ methodName, domainName, type, listener });
+                } else {
+                    cdp.connection[methodName](`${domainName}.${type}`, listener);
+                }
+            };
         }
 
         function getDomainMethodFunction(methodName, domainName) {
