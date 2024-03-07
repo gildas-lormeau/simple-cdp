@@ -44,7 +44,7 @@ function closeTarget(targetId) {
 
 class CDP {
     connection;
-    options = Object.assign({}, DEFAULT_OPTIONS);
+    options = Object.assign({}, options);
     #pendingEventListenerCalls = [];
 
     constructor(options) {
@@ -127,26 +127,27 @@ class CDP {
         }
     }
     static getTargets() {
-        const { apiPathTargets, apiUrl } = cdp.options;
-        return fetchDataWithRetry(new URL(apiPathTargets, apiUrl), cdp.options);
+        const { apiPathTargets, apiUrl } = options;
+        return fetchDataWithRetry(new URL(apiPathTargets, apiUrl), options);
     }
     static createTarget(url) {
-        const { apiPathNewTarget, apiUrl } = cdp.options;
+        const { apiPathNewTarget, apiUrl } = options;
         const path = url ? `${apiPathNewTarget}?${url}` : apiPathNewTarget;
-        return fetchDataWithRetry(new URL(path, apiUrl), cdp.options, "PUT");
+        return fetchDataWithRetry(new URL(path, apiUrl), options, "PUT");
     }
     static async activateTarget(targetId) {
-        const { apiPathActivateTarget, apiUrl } = cdp.options;
-        await fetchDataWithRetry(new URL(`${apiPathActivateTarget}/${targetId}`, apiUrl), cdp.options);
+        const { apiPathActivateTarget, apiUrl } = options;
+        await fetchDataWithRetry(new URL(`${apiPathActivateTarget}/${targetId}`, apiUrl), options);
     }
     static async closeTarget(targetId) {
-        const { apiPathCloseTarget, apiUrl } = cdp.options;
-        await fetchDataWithRetry(new URL(`${apiPathCloseTarget}/${targetId}`, apiUrl)), cdp.options;
+        const { apiPathCloseTarget, apiUrl } = options;
+        await fetchDataWithRetry(new URL(`${apiPathCloseTarget}/${targetId}`, apiUrl)), options;
     }
 }
 
-const cdp = new CDP();
-export { cdp, CDP, getTargets, createTarget, activateTarget, closeTarget };
+const options = Object.assign({}, DEFAULT_OPTIONS);
+const cdp = new CDP(options);
+export { cdp, CDP, options, getTargets, createTarget, activateTarget, closeTarget };
 
 class Connection extends EventTarget {
     #webSocket;

@@ -281,6 +281,11 @@ declare class CDP extends CDPMembers {
 declare const cdp: CDP;
 
 /**
+ * Options of the connection
+ */
+declare const options: CDPOptions;
+
+/**
  * Get the targets
  */
 declare const getTargets: typeof CDP.getTargets;
@@ -297,4 +302,12 @@ declare const activateTarget: typeof CDP.activateTarget;
  */
 declare const closeTarget: typeof CDP.closeTarget;
 
-export { activateTarget, CDP, cdp, closeTarget, createTarget, getTargets };
+export {
+  activateTarget,
+  CDP,
+  cdp,
+  closeTarget,
+  createTarget,
+  getTargets,
+  options,
+};
