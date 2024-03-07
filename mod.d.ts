@@ -57,20 +57,20 @@ declare interface CDPOptions {
 }
 
 /**
- * Value of a plain object
+ * Value of a CDPObject
  */
-declare type CDPObjectValue =
+declare type CDPValue =
   | string
   | number
   | boolean
-  | CDPObject
-  | CDPObjectValue[];
+  | CDPValue[]
+  | { [key: string]: CDPValue };
 
 /**
- * Plain object
+ * Object type used in the CDP API
  */
 declare interface CDPObject {
-  [key: string]: CDPObjectValue;
+  [k: string]: CDPValue;
 }
 
 /**
