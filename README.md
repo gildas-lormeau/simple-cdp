@@ -28,9 +28,9 @@ import { cdp } from "@simple-cdp/simple-cdp";
 
 // enable auto-attach to new targets
 await cdp.Target.setAutoAttach({
-    autoAttach: true,
-    flatten: true,
-    waitForDebuggerOnStart: false
+  autoAttach: true,
+  flatten: true,
+  waitForDebuggerOnStart: false
 });
 
 // add event listener triggered when a session is attached to a target
@@ -41,21 +41,21 @@ const url = "https://example.com";
 await cdp.Target.createTarget({ url });
 
 async function onAttachedToTarget({ params }) {
-    // get session ID
-    const { sessionId, targetInfo } = params;
+  // get session ID
+  const { sessionId, targetInfo } = params;
 
-    // check if the target is a page
-    if (targetInfo.type === "page") {
-        // enable "Runtime" domain
-        await cdp.Runtime.enable(null, sessionId);
+  // check if the target is a page
+  if (targetInfo.type === "page") {
+    // enable "Runtime" domain
+    await cdp.Runtime.enable(null, sessionId);
 
-        // evaluate JavaScript expression
-        const expression = "41 + 1";
-        const { result } = await cdp.Runtime.evaluate({ expression }, sessionId);
+    // evaluate JavaScript expression
+    const expression = "41 + 1";
+    const { result } = await cdp.Runtime.evaluate({ expression }, sessionId);
 
-        // display result in the console (i.e. 42)
-        console.log(result.value);
-    }
+    // display result in the console (i.e. 42)
+    console.log(result.value);
+  }
 }
 ```
 
