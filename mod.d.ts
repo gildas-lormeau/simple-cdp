@@ -116,7 +116,8 @@ declare interface CDPEvent {
   /**
    * The parameters
    */
-  params: CDPObject;
+  // deno-lint-ignore no-explicit-any
+  params: any;
   /**
    * The session ID
    */
