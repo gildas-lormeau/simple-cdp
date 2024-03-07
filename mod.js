@@ -69,19 +69,21 @@ class CDP {
         function getDomain(target, domainName) {
             target[domainName] = new Proxy(Object.create(null), {
                 get(target, methodName) {
-                    return getDomainMethod(target, methodName, domainName);
+                    if (methodName in target) {
+                        return target[methodName];
+                    } else {
+                        return getDomainMethod(target, methodName, domainName);
+                    }
                 }
             });
             return target[domainName];
         }
 
         function getDomainMethod(target, methodName, domainName) {
-            if (!(methodName in target)) {
-                if (EVENT_LISTENERS.includes(methodName)) {
-                    target[methodName] = getDomainListenerFunction(methodName, domainName);
-                } else {
-                    target[methodName] = getDomainMethodFunction(methodName, domainName);
-                }
+            if (EVENT_LISTENERS.includes(methodName)) {
+                target[methodName] = getDomainListenerFunction(methodName, domainName);
+            } else {
+                target[methodName] = getDomainMethodFunction(methodName, domainName);
             }
             return target[methodName];
         }
