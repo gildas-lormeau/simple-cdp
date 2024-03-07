@@ -117,7 +117,7 @@ class CDP {
         return this.options;
     }
     set options(value) {
-        Object.assign(cthisdp.options, value);
+        Object.assign(this.options, value);
     }
     reset() {
         if (this.connection !== UNDEFINED_VALUE) {
