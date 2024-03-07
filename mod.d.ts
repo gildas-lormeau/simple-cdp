@@ -95,7 +95,8 @@ declare interface CDPConnection {
     method: string,
     params: CDPObject,
     sesssionId?: string,
-  ): Promise<CDPObject>;
+    // deno-lint-ignore no-explicit-any
+  ): Promise<any>;
   /**
    * Close the connection
    *
@@ -170,7 +171,8 @@ declare type CDPDomainMethods = {
   [Key in Exclude<string, keyof CDPDomainListeners> as Uncapitalize<Key>]: (
     args?: CDPObject | null,
     sessionId?: string,
-  ) => Promise<object>;
+    // deno-lint-ignore no-explicit-any
+  ) => Promise<any>;
 };
 
 /**
