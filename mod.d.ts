@@ -7,53 +7,53 @@ declare interface CDPOptions {
    *
    * @defaultValue "http://localhost:9222"
    */
-  apiUrl: string;
+  apiUrl?: string;
   /**
    * The path of the connection
    *
    * @defaultValue "json/version"
    */
-  apiPath: string;
+  apiPath?: string;
   /**
    * The WebSocket URL of the connection
    */
-  webSocketDebuggerUrl: string;
+  webSocketDebuggerUrl?: string;
   /**
    * The path to get all targets
    *
    * @defaultValue "json"
    */
-  apiPathTargets: string;
+  apiPathTargets?: string;
   /**
    * The path to create new target
    *
    * @defaultValue "json/new"
    */
-  apiPathNewTarget: string;
+  apiPathNewTarget?: string;
   /**
    * The path to activate a ‡target
    *
    * @defaultValue "json/activate"
    */
-  apiPathActivateTarget: string;
+  apiPathActivateTarget?: string;
   /**
    * The path to close a target
    *
    * @defaultValue "json/close"
    */
-  apiPathCloseTarget: string;
+  apiPathCloseTarget?: string;
   /**
    * The maximum number of retries
    *
    * @defaultValue 20
    */
-  connectionMaxRetry: number;
+  connectionMaxRetry?: number;
   /**
    * The delay between retries
    *
    * @defaultValue 500
    */
-  connectionRetryDelay: number;
+  connectionRetryDelay?: number;
 }
 
 /**
