@@ -170,7 +170,7 @@ declare type CDPDomainMethods = {
   [Key in Exclude<string, keyof CDPDomainListeners> as Uncapitalize<Key>]: (
     args?: CDPObject | null,
     sessionId?: string,
-  ) => Promise<CDPObject>;
+  ) => Promise<object>;
 };
 
 /**
