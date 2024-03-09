@@ -115,7 +115,8 @@ class CDP {
             if (cdp.connection === UNDEFINED_VALUE) {
                 let webSocketDebuggerUrl = cdp.options.webSocketDebuggerUrl;
                 if (webSocketDebuggerUrl === UNDEFINED_VALUE) {
-                    ({ webSocketDebuggerUrl } = await fetchData(new URL(cdp.options.apiPath, cdp.options.apiUrl), cdp.options));
+                    const url = new URL(cdp.options.apiPath, cdp.options.apiUrl);
+                    ({ webSocketDebuggerUrl } = await fetchData(url, cdp.options));
                 }
                 const connection = new Connection(webSocketDebuggerUrl);
                 await connection.open();
