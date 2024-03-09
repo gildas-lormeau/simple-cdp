@@ -200,9 +200,9 @@ class Connection extends EventTarget {
             if (error === UNDEFINED_VALUE) {
                 pendingRequest.resolve(result);
             } else {
-                const exception = new Error(error.message);
-                exception.code = error.code;
-                pendingRequest.reject(exception);
+                const errorEvent = new Error(error.message);
+                errorEvent.code = error.code;
+                pendingRequest.reject(errorEvent);
             }
             this.#pendingRequests.delete(id);
         }
