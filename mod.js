@@ -10,18 +10,18 @@ const EVENT_LISTENERS = ["addEventListener", "removeEventListener"];
 const DEFAULT_URL = "http://localhost:9222";
 const DEFAULT_PATH = "json/version";
 const DEFAULT_PATH_TARGETS = "json";
-const PATH_NEW_TARGET = "json/new";
-const PATH_ACTIVATE_TARGET = "json/activate";
-const PATH_CLOSE_TARGET = "json/close";
+const DEFAULT_PATH_NEW_TARGET = "json/new";
+const DEFAULT_PATH_ACTIVATE_TARGET = "json/activate";
+const DEFAULT_PATH_CLOSE_TARGET = "json/close";
 const DEFAULT_CONNECTION_MAX_RETRY = 20;
 const DEFAULT_CONNECTION_RETRY_DELAY = 500;
 const DEFAULT_OPTIONS = {
     apiUrl: DEFAULT_URL,
     apiPath: DEFAULT_PATH,
     apiPathTargets: DEFAULT_PATH_TARGETS,
-    apiPathNewTarget: PATH_NEW_TARGET,
-    apiPathActivateTarget: PATH_ACTIVATE_TARGET,
-    apiPathCloseTarget: PATH_CLOSE_TARGET,
+    apiPathNewTarget: DEFAULT_PATH_NEW_TARGET,
+    apiPathActivateTarget: DEFAULT_PATH_ACTIVATE_TARGET,
+    apiPathCloseTarget: DEFAULT_PATH_CLOSE_TARGET,
     connectionMaxRetry: DEFAULT_CONNECTION_MAX_RETRY,
     connectionRetryDelay: DEFAULT_CONNECTION_RETRY_DELAY
 };
