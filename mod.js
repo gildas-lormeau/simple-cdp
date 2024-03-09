@@ -169,7 +169,6 @@ class Connection extends EventTarget {
         super();
         this.#webSocketDebuggerUrl = webSocketDebuggerUrl;
     }
-
     open() {
         this.#webSocket = new WebSocket(this.#webSocketDebuggerUrl);
         this.#webSocket.addEventListener(MESSAGE_EVENT, (event) => this.#onMessage(JSON.parse(event.data)));
@@ -179,7 +178,6 @@ class Connection extends EventTarget {
             this.#webSocket.addEventListener(ERROR_EVENT, () => reject(new Error()));
         });
     }
-
     sendMessage(method, params = {}, sessionId) {
         const id = this.#nextRequestId++;
         const message = JSON.stringify({ id, method, params, sessionId });
@@ -189,11 +187,9 @@ class Connection extends EventTarget {
         this.#pendingRequests.set(id, pendingRequest);
         return promise;
     }
-
     close() {
         this.#webSocket.close();
     }
-
     #onMessage({ id, method, result, error, params, sessionId }) {
         if (id !== UNDEFINED_VALUE) {
             const pendingRequest = this.#pendingRequests.get(id);
