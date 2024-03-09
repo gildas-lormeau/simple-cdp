@@ -113,8 +113,12 @@ class CDP {
 
         async function ready() {
             if (cdp.connection === UNDEFINED_VALUE) {
-                const connection = new Connection(cdp.options);
-                await retry(() => connection.open(), cdp.options);
+                let webSocketDebuggerUrl = cdp.options.webSocketDebuggerUrl;
+                if (webSocketDebuggerUrl === UNDEFINED_VALUE) {
+                    ({ webSocketDebuggerUrl } = await fetchData(new URL(cdp.options.apiPath, cdp.options.apiUrl), cdp.options));
+                }
+                const connection = new Connection(webSocketDebuggerUrl);
+                await connection.open();
                 cdp.connection = connection;
             }
         }
@@ -134,20 +138,20 @@ class CDP {
     }
     static getTargets() {
         const { apiPathTargets, apiUrl } = options;
-        return fetchDataWithRetry(new URL(apiPathTargets, apiUrl), options);
+        return fetchData(new URL(apiPathTargets, apiUrl), options);
     }
     static createTarget(url) {
         const { apiPathNewTarget, apiUrl } = options;
         const path = url ? `${apiPathNewTarget}?${url}` : apiPathNewTarget;
-        return fetchDataWithRetry(new URL(path, apiUrl), options, "PUT");
+        return fetchData(new URL(path, apiUrl), options, "PUT");
     }
     static async activateTarget(targetId) {
         const { apiPathActivateTarget, apiUrl } = options;
-        await fetchDataWithRetry(new URL(`${apiPathActivateTarget}/${targetId}`, apiUrl), options);
+        await fetchData(new URL(`${apiPathActivateTarget}/${targetId}`, apiUrl), options);
     }
     static async closeTarget(targetId) {
         const { apiPathCloseTarget, apiUrl } = options;
-        await fetchDataWithRetry(new URL(`${apiPathCloseTarget}/${targetId}`, apiUrl)), options;
+        await fetchData(new URL(`${apiPathCloseTarget}/${targetId}`, apiUrl)), options;
     }
 }
 
@@ -156,32 +160,18 @@ const cdp = new CDP(options);
 export { cdp, CDP, options, getTargets, createTarget, activateTarget, closeTarget };
 
 class Connection extends EventTarget {
-    #webSocket;
-    #apiUrl;
-    #apiPath;
     #webSocketDebuggerUrl;
+    #webSocket;
     #pendingRequests = new Map();
     #nextRequestId = 0;
 
-    constructor(options = {}) {
+    constructor(webSocketDebuggerUrl) {
         super();
-        if (options.webSocketDebuggerUrl === UNDEFINED_VALUE) {
-            this.#apiUrl = options.apiUrl;
-            this.#apiPath = options.apiPath;
-        } else {
-            this.#webSocketDebuggerUrl = options.webSocketDebuggerUrl;
-        }
+        this.#webSocketDebuggerUrl = webSocketDebuggerUrl;
     }
 
-    async open() {
-        let webSocketDebuggerUrl;
-        if (this.#webSocketDebuggerUrl === UNDEFINED_VALUE) {
-            const response = await fetchData(new URL(this.#apiPath, this.#apiUrl));
-            ({ webSocketDebuggerUrl } = await response.json());
-        } else {
-            webSocketDebuggerUrl = this.#webSocketDebuggerUrl;
-        }
-        this.#webSocket = new WebSocket(webSocketDebuggerUrl);
+    open() {
+        this.#webSocket = new WebSocket(this.#webSocketDebuggerUrl);
         this.#webSocket.addEventListener(MESSAGE_EVENT, (event) => this.#onMessage(JSON.parse(event.data)));
         return new Promise((resolve, reject) => {
             this.#webSocket.addEventListener(OPEN_EVENT, () => resolve());
@@ -224,24 +214,21 @@ class Connection extends EventTarget {
     }
 }
 
-function fetchDataWithRetry(url, options, method) {
+function fetchData(url, options, method) {
     return retry(async () => {
-        const response = await fetchData(url, { method });
+        let response;
+        try {
+            response = await fetch(url, { method });
+        } catch (error) {
+            error.code = CONNECTION_REFUSED_ERROR_CODE;
+            throw error;
+        }
         if (response.status >= 400) {
             throw new Error(await response.text());
         } else {
             return response.json();
         }
     }, options);
-}
-
-async function fetchData(...args) {
-    try {
-        return await fetch(...args);
-    } catch (error) {
-        error.code = CONNECTION_REFUSED_ERROR_CODE;
-        throw error;
-    }
 }
 
 async function retry(fn, options, retryCount = 0) {
