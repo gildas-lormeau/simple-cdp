@@ -26,22 +26,6 @@ const DEFAULT_OPTIONS = {
     connectionRetryDelay: DEFAULT_CONNECTION_RETRY_DELAY
 };
 
-function getTargets() {
-    return CDP.getTargets();
-}
-
-function createTarget(url) {
-    return CDP.createTarget(url);
-}
-
-function activateTarget(targetId) {
-    return CDP.activateTarget(targetId);
-}
-
-function closeTarget(targetId) {
-    return CDP.closeTarget(targetId);
-}
-
 class CDP {
     connection;
     options = Object.assign({}, options);
@@ -158,6 +142,10 @@ class CDP {
 
 const options = Object.assign({}, DEFAULT_OPTIONS);
 const cdp = new CDP(options);
+const getTargets = CDP.getTargets;
+const createTarget = CDP.createTarget;
+const activateTarget = CDP.activateTarget;
+const closeTarget = CDP.closeTarget;
 export { cdp, CDP, options, getTargets, createTarget, activateTarget, closeTarget };
 
 class Connection extends EventTarget {
