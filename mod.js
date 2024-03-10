@@ -7,6 +7,7 @@ const CLOSE_EVENT = "close";
 const ERROR_EVENT = "error";
 const CONNECTION_REFUSED_ERROR_CODE = "ConnectionRefused";
 const EVENT_LISTENERS = ["addEventListener", "removeEventListener"];
+const MIN_INVALID_HTTP_STATUS_CODE = 400;
 const DEFAULT_URL = "http://localhost:9222";
 const DEFAULT_PATH = "json/version";
 const DEFAULT_PATH_TARGETS = "json";
@@ -204,7 +205,7 @@ function fetchData(url, options, method) {
             error.code = CONNECTION_REFUSED_ERROR_CODE;
             throw error;
         }
-        if (response.status >= 400) {
+        if (response.status >= MIN_INVALID_HTTP_STATUS_CODE) {
             throw new Error(await response.text());
         } else {
             return response.json();
