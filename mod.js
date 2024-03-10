@@ -165,8 +165,9 @@ class Connection extends EventTarget {
         });
     }
     sendMessage(method, params = {}, sessionId) {
-        const id = this.#nextRequestId++ % Number.MAX_SAFE_INTEGER;
+        const id = this.#nextRequestId;
         const message = JSON.stringify({ id, method, params, sessionId });
+        this.#nextRequestId = (this.#nextRequestId + 1) % Number.MAX_SAFE_INTEGER;
         this.#webSocket.send(message);
         let pendingRequest;
         const promise = new Promise((resolve, reject) => (pendingRequest = { resolve, reject }));
