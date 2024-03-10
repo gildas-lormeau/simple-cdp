@@ -45,7 +45,7 @@ class CDP {
                 }
             }
         });
-        cdp.options = Object.assign(cdp.options, options);
+        Object.assign(cdp.options, options);
         return proxy;
 
         function getDomain(target, domainName) {
