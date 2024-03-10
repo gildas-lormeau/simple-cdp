@@ -180,7 +180,7 @@ class Connection extends EventTarget {
         });
     }
     sendMessage(method, params = {}, sessionId) {
-        const id = this.#nextRequestId++;
+        const id = this.#nextRequestId++ % Number.MAX_SAFE_INTEGER;
         const message = JSON.stringify({ id, method, params, sessionId });
         this.#webSocket.send(message);
         let pendingRequest;
