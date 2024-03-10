@@ -57,7 +57,7 @@ declare interface CDPOptions {
 }
 
 /**
- * Value of a CDPObject
+ * Value of a {@link CDPObject}
  */
 declare type CDPValue =
   | string
@@ -67,7 +67,7 @@ declare type CDPValue =
   | { [key: string]: CDPValue };
 
 /**
- * Object type used in the CDP API
+ * Object type used in the {@link CDP} API
  */
 declare interface CDPObject {
   [key: string]: CDPValue;
@@ -159,7 +159,7 @@ declare class CDPDomainListeners {
 }
 
 /**
- * Domain methods (e.g. "enable", "disable"...)
+ * Domain methods (e.g. `enable()`, `disable()`...)
  */
 declare type CDPDomainMethods = {
   /**
@@ -177,7 +177,7 @@ declare type CDPDomainMethods = {
 };
 
 /**
- * Domain of the API (e.g. "Page", "Target", "Runtime"...)
+ * Domain of the API (e.g. `Page`, `Target`, `Runtime`...)
  */
 declare type CDPDomain = CDPDomainListeners & CDPDomainMethods;
 
@@ -200,7 +200,7 @@ declare class CDPMembers {
 }
 
 /**
- * Property key of a domain
+ * Property key of a domain (e.g. "Page", "Target", "Runtime"...)
  */
 declare type CDPDomainPropertyKey = Capitalize<
   Exclude<string, keyof CDPMembers>
