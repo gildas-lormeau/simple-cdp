@@ -84,10 +84,10 @@ class CDP {
             return async (params = {}, sessionId) => {
                 await ready();
                 if (cdp.#pendingEventListenerCalls.length > 0) {
-                    for (const { methodName, domainName, type, listener } of cdp.#pendingEventListenerCalls) {
+                    while (cdp.#pendingEventListenerCalls.length > 0) {
+                        const { methodName, domainName, type, listener } = cdp.#pendingEventListenerCalls.shift();
                         cdp.connection[methodName](`${domainName}.${type}`, listener);
                     }
-                    cdp.#pendingEventListenerCalls.length = 0;
                 }
                 return cdp.connection.sendMessage(`${domainName}.${methodName}`, params, sessionId);
             };
