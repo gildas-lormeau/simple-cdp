@@ -83,11 +83,9 @@ class CDP {
         function getDomainMethodFunction(methodName, domainName) {
             return async (params = {}, sessionId) => {
                 await ready();
-                if (cdp.#pendingEventListenerCalls.length > 0) {
-                    while (cdp.#pendingEventListenerCalls.length > 0) {
-                        const { methodName, domainName, type, listener } = cdp.#pendingEventListenerCalls.shift();
-                        cdp.connection[methodName](`${domainName}.${type}`, listener);
-                    }
+                while (cdp.#pendingEventListenerCalls.length > 0) {
+                    const { methodName, domainName, type, listener } = cdp.#pendingEventListenerCalls.shift();
+                    cdp.connection[methodName](`${domainName}.${type}`, listener);
                 }
                 return cdp.connection.sendMessage(`${domainName}.${methodName}`, params, sessionId);
             };
