@@ -38,12 +38,10 @@ class CDP {
             get(target, propertyName) {
                 if (propertyName in cdp) {
                     return cdp[propertyName];
+                } else if (propertyName in target) {
+                    return target[propertyName];
                 } else {
-                    if (propertyName in target) {
-                        return target[propertyName];
-                    } else {
-                        return getDomain(target, propertyName);
-                    }
+                    return getDomain(target, propertyName);
                 }
             }
         });
