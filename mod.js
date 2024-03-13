@@ -30,7 +30,7 @@ const DEFAULT_OPTIONS = {
 class CDP {
     connection;
     options = Object.assign({}, options);
-    #pendingEventListenerCalls = [];
+    #pendingEventListenerCalls = new Map();
 
     constructor(options) {
         // deno-lint-ignore no-this-alias
@@ -74,7 +74,12 @@ class CDP {
         function getDomainListenerFunction(methodName, domainName) {
             return (type, listener) => {
                 if (cdp.connection === UNDEFINED_VALUE) {
-                    cdp.#pendingEventListenerCalls.push({ methodName, domainName, type, listener });
+                    let pendingEventListenerCalls = cdp.#pendingEventListenerCalls.get(domainName);
+                    if (pendingEventListenerCalls === UNDEFINED_VALUE) {
+                        pendingEventListenerCalls = [];
+                        cdp.#pendingEventListenerCalls.set(domainName, pendingEventListenerCalls);
+                    }
+                    pendingEventListenerCalls.push({ methodName, domainName, type, listener });
                 } else {
                     cdp.connection[methodName](`${domainName}.${type}`, listener);
                 }
@@ -84,9 +89,13 @@ class CDP {
         function getDomainMethodFunction(methodName, domainName) {
             return async (params = {}, sessionId) => {
                 await ready();
-                while (cdp.#pendingEventListenerCalls.length > 0) {
-                    const { methodName, domainName, type, listener } = cdp.#pendingEventListenerCalls.shift();
-                    cdp.connection[methodName](`${domainName}.${type}`, listener);
+                const pendingEventListenerCalls = cdp.#pendingEventListenerCalls.get(domainName);
+                if (pendingEventListenerCalls !== UNDEFINED_VALUE) {
+                    while (pendingEventListenerCalls.length > 0) {
+                        const { methodName, domainName, type, listener } = pendingEventListenerCalls.shift();
+                        cdp.connection[methodName](`${domainName}.${type}`, listener);
+                    }
+                    cdp.#pendingEventListenerCalls.delete(domainName);
                 }
                 return cdp.connection.sendMessage(`${domainName}.${methodName}`, params, sessionId);
             };
@@ -115,7 +124,7 @@ class CDP {
         if (this.connection !== UNDEFINED_VALUE) {
             this.connection.close();
             this.connection = UNDEFINED_VALUE;
-            this.#pendingEventListenerCalls.length = 0;
+            this.#pendingEventListenerCalls.clear();
         }
     }
     static getTargets() {
