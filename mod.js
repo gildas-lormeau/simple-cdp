@@ -65,21 +65,6 @@ class CDP {
             return target[domainName];
         }
 
-        function getDomainListenerFunction(methodName, domainName) {
-            return (type, listener) => {
-                if (cdp.connection === UNDEFINED_VALUE) {
-                    let pendingEventListenerCalls = cdp.#pendingEventListenerCalls.get(domainName);
-                    if (pendingEventListenerCalls === UNDEFINED_VALUE) {
-                        pendingEventListenerCalls = [];
-                        cdp.#pendingEventListenerCalls.set(domainName, pendingEventListenerCalls);
-                    }
-                    pendingEventListenerCalls.push({ methodName, domainName, type, listener });
-                } else {
-                    cdp.connection[methodName](`${domainName}.${type}`, listener);
-                }
-            };
-        }
-
         function getDomainMethodFunction(target, methodName, domainName) {
             target[methodName] = async (params = {}, sessionId) => {
                 await ready();
@@ -94,6 +79,21 @@ class CDP {
                 return cdp.connection.sendMessage(`${domainName}.${methodName}`, params, sessionId);
             };
             return target[methodName];
+        }
+
+        function getDomainListenerFunction(methodName, domainName) {
+            return (type, listener) => {
+                if (cdp.connection === UNDEFINED_VALUE) {
+                    let pendingEventListenerCalls = cdp.#pendingEventListenerCalls.get(domainName);
+                    if (pendingEventListenerCalls === UNDEFINED_VALUE) {
+                        pendingEventListenerCalls = [];
+                        cdp.#pendingEventListenerCalls.set(domainName, pendingEventListenerCalls);
+                    }
+                    pendingEventListenerCalls.push({ methodName, domainName, type, listener });
+                } else {
+                    cdp.connection[methodName](`${domainName}.${type}`, listener);
+                }
+            };
         }
 
         async function ready() {
