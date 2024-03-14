@@ -147,7 +147,7 @@ const getTargets = CDP.getTargets;
 const createTarget = CDP.createTarget;
 const activateTarget = CDP.activateTarget;
 const closeTarget = CDP.closeTarget;
-export { cdp, CDP, options, getTargets, createTarget, activateTarget, closeTarget };
+export { cdp, CDP, options, getTargets, createTarget, activateTarget, closeTarget, CONNECTION_REFUSED_ERROR_CODE };
 
 class Connection extends EventTarget {
     #webSocketDebuggerUrl;
