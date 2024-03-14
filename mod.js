@@ -208,7 +208,7 @@ class Connection extends EventTarget {
 }
 
 function fetchData(url, options, method) {
-    return retry(async () => {
+    return retryConnection(async () => {
         let response;
         try {
             response = await fetch(url, { method });
@@ -227,14 +227,14 @@ function fetchData(url, options, method) {
     }, options);
 }
 
-async function retry(fn, options, retryCount = 0) {
+async function retryConnection(fn, options, retryCount = 0) {
     const { connectionMaxRetry, connectionRetryDelay } = options;
     try {
         return await fn();
     } catch (error) {
         if (error.code == CONNECTION_REFUSED_ERROR_CODE && retryCount < connectionMaxRetry) {
             await new Promise((resolve) => setTimeout(resolve, connectionRetryDelay));
-            return retry(fn, options, retryCount + 1);
+            return retryConnection(fn, options, retryCount + 1);
         } else {
             throw error;
         }
