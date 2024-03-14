@@ -192,7 +192,7 @@ declare class CDPMembers {
   /**
    * The connection object
    */
-  connection: CDPConnection;
+  readonly connection: CDPConnection;
   /**
    * Reset the connection
    */

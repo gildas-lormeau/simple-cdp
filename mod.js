@@ -27,8 +27,8 @@ const DEFAULT_OPTIONS = {
 };
 
 class CDP {
-    connection;
-    options = Object.assign({}, options);
+    #connection;
+    #options = Object.assign({}, options);
     #pendingEventListenerCalls = new Map();
 
     constructor(options) {
@@ -45,7 +45,7 @@ class CDP {
                 }
             }
         });
-        Object.assign(cdp.options, options);
+        Object.assign(cdp.#options, options);
         return proxy;
 
         function getDomain(target, domainName) {
@@ -72,18 +72,18 @@ class CDP {
                 if (pendingEventListenerCalls !== UNDEFINED_VALUE) {
                     while (pendingEventListenerCalls.length > 0) {
                         const { methodName, domainName, type, listener } = pendingEventListenerCalls.shift();
-                        cdp.connection[methodName](`${domainName}.${type}`, listener);
+                        cdp.#connection[methodName](`${domainName}.${type}`, listener);
                     }
                     cdp.#pendingEventListenerCalls.delete(domainName);
                 }
-                return cdp.connection.sendMessage(`${domainName}.${methodName}`, params, sessionId);
+                return cdp.#connection.sendMessage(`${domainName}.${methodName}`, params, sessionId);
             };
             return target[methodName];
         }
 
         function getDomainListenerFunction(methodName, domainName) {
             return (type, listener) => {
-                if (cdp.connection === UNDEFINED_VALUE) {
+                if (cdp.#connection === UNDEFINED_VALUE) {
                     let pendingEventListenerCalls = cdp.#pendingEventListenerCalls.get(domainName);
                     if (pendingEventListenerCalls === UNDEFINED_VALUE) {
                         pendingEventListenerCalls = [];
@@ -91,34 +91,37 @@ class CDP {
                     }
                     pendingEventListenerCalls.push({ methodName, domainName, type, listener });
                 } else {
-                    cdp.connection[methodName](`${domainName}.${type}`, listener);
+                    cdp.#connection[methodName](`${domainName}.${type}`, listener);
                 }
             };
         }
 
         async function ready() {
-            if (cdp.connection === UNDEFINED_VALUE) {
-                let webSocketDebuggerUrl = cdp.options.webSocketDebuggerUrl;
+            if (cdp.#connection === UNDEFINED_VALUE) {
+                let webSocketDebuggerUrl = cdp.#options.webSocketDebuggerUrl;
                 if (webSocketDebuggerUrl === UNDEFINED_VALUE) {
-                    const url = new URL(cdp.options.apiPath, cdp.options.apiUrl);
-                    ({ webSocketDebuggerUrl } = await fetchData(url, cdp.options));
+                    const url = new URL(cdp.#options.apiPath, cdp.#options.apiUrl);
+                    ({ webSocketDebuggerUrl } = await fetchData(url, cdp.#options));
                 }
                 const connection = new Connection(webSocketDebuggerUrl);
                 await connection.open();
-                cdp.connection = connection;
+                cdp.#connection = connection;
             }
         }
     }
     get options() {
-        return this.options;
+        return this.#options;
     }
     set options(value) {
-        Object.assign(this.options, value);
+        Object.assign(this.#options, value);
+    }
+    get connection() {
+        return this.#connection;
     }
     reset() {
-        if (this.connection !== UNDEFINED_VALUE) {
-            this.connection.close();
-            this.connection = UNDEFINED_VALUE;
+        if (this.#connection !== UNDEFINED_VALUE) {
+            this.#connection.close();
+            this.#connection = UNDEFINED_VALUE;
             this.#pendingEventListenerCalls.clear();
         }
     }
