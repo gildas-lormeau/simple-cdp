@@ -174,7 +174,7 @@ class Connection extends EventTarget {
         this.#nextRequestId = (this.#nextRequestId + 1) % Number.MAX_SAFE_INTEGER;
         this.#webSocket.send(message);
         let pendingRequest;
-        const promise = new Promise((resolve, reject) => (pendingRequest = { resolve, reject }));
+        const promise = new Promise((resolve, reject) => (pendingRequest = { resolve, reject, method, params, sessionId }));
         this.#pendingRequests.set(id, pendingRequest);
         return promise;
     }
@@ -183,13 +183,15 @@ class Connection extends EventTarget {
     }
     #onMessage({ id, method, result, error, params, sessionId }) {
         if (id !== UNDEFINED_VALUE) {
-            const pendingRequest = this.#pendingRequests.get(id);
+            const { resolve, reject, method, params, sessionId } = this.#pendingRequests.get(id);
             if (error === UNDEFINED_VALUE) {
-                pendingRequest.resolve(result);
+                resolve(result);
             } else {
-                const errorEvent = new Error(error.message);
+                const message = error.message + " when calling " + `${method}(${JSON.stringify(params)})` + `
+                    ${sessionId === UNDEFINED_VALUE ? "" : ` (sessionId ${JSON.stringify(sessionId)})`}`;
+                const errorEvent = new Error(message);
                 errorEvent.code = error.code;
-                pendingRequest.reject(errorEvent);
+                reject(errorEvent);
             }
             this.#pendingRequests.delete(id);
         }
