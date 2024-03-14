@@ -6,7 +6,6 @@ const OPEN_EVENT = "open";
 const CLOSE_EVENT = "close";
 const ERROR_EVENT = "error";
 const CONNECTION_REFUSED_ERROR_CODE = "ConnectionRefused";
-const EVENT_LISTENERS = ["addEventListener", "removeEventListener"];
 const MIN_INVALID_HTTP_STATUS_CODE = 400;
 const DEFAULT_URL = "http://localhost:9222";
 const DEFAULT_PATH = "json/version";
@@ -52,23 +51,18 @@ class CDP {
         function getDomain(target, domainName) {
             target[domainName] = new Proxy(Object.create(null), {
                 get(target, methodName) {
-                    if (methodName in target) {
+                    if (methodName in this) {
+                        return this[methodName];
+                    } else if (methodName in target) {
                         return target[methodName];
                     } else {
-                        return getDomainMethod(target, methodName, domainName);
+                        return getDomainMethodFunction(target, methodName, domainName);
                     }
-                }
+                },
+                addEventListener: getDomainListenerFunction("addEventListener", domainName),
+                removeEventListener: getDomainListenerFunction("removeEventListener", domainName)
             });
             return target[domainName];
-        }
-
-        function getDomainMethod(target, methodName, domainName) {
-            if (EVENT_LISTENERS.includes(methodName)) {
-                target[methodName] = getDomainListenerFunction(methodName, domainName);
-            } else {
-                target[methodName] = getDomainMethodFunction(methodName, domainName);
-            }
-            return target[methodName];
         }
 
         function getDomainListenerFunction(methodName, domainName) {
@@ -86,8 +80,8 @@ class CDP {
             };
         }
 
-        function getDomainMethodFunction(methodName, domainName) {
-            return async (params = {}, sessionId) => {
+        function getDomainMethodFunction(target, methodName, domainName) {
+            target[methodName] = async (params = {}, sessionId) => {
                 await ready();
                 const pendingEventListenerCalls = cdp.#pendingEventListenerCalls.get(domainName);
                 if (pendingEventListenerCalls !== UNDEFINED_VALUE) {
@@ -99,6 +93,7 @@ class CDP {
                 }
                 return cdp.connection.sendMessage(`${domainName}.${methodName}`, params, sessionId);
             };
+            return target[methodName];
         }
 
         async function ready() {
