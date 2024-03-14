@@ -76,7 +76,7 @@ declare interface CDPObject {
 /**
  * Connection
  */
-declare interface CDPConnection {
+declare interface CDPConnection extends EventTarget {
   /**
    * Open the connection
    *
