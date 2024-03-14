@@ -306,6 +306,10 @@ declare const closeTarget: typeof CDP.closeTarget;
  * Error code of the connection refused error
  */
 declare const CONNECTION_REFUSED_ERROR_CODE: string;
+/**
+ * Error code when encountering a connection error
+ */
+declare const CONNECTION_ERROR_CODE: string;
 
 export {
   activateTarget,
@@ -316,4 +320,5 @@ export {
   getTargets,
   options,
   CONNECTION_REFUSED_ERROR_CODE,
+  CONNECTION_ERROR_CODE,
 };

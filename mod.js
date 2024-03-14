@@ -6,6 +6,7 @@ const OPEN_EVENT = "open";
 const CLOSE_EVENT = "close";
 const ERROR_EVENT = "error";
 const CONNECTION_REFUSED_ERROR_CODE = "ConnectionRefused";
+const CONNECTION_ERROR_CODE = "ConnectionError";
 const MIN_INVALID_HTTP_STATUS_CODE = 400;
 const DEFAULT_URL = "http://localhost:9222";
 const DEFAULT_PATH = "json/version";
@@ -150,7 +151,7 @@ const getTargets = CDP.getTargets;
 const createTarget = CDP.createTarget;
 const activateTarget = CDP.activateTarget;
 const closeTarget = CDP.closeTarget;
-export { cdp, CDP, options, getTargets, createTarget, activateTarget, closeTarget, CONNECTION_REFUSED_ERROR_CODE };
+export { cdp, CDP, options, getTargets, createTarget, activateTarget, closeTarget, CONNECTION_REFUSED_ERROR_CODE, CONNECTION_ERROR_CODE };
 
 class Connection extends EventTarget {
     #webSocketDebuggerUrl;
@@ -216,7 +217,10 @@ function fetchData(url, options, method) {
             throw error;
         }
         if (response.status >= MIN_INVALID_HTTP_STATUS_CODE) {
-            throw new Error(await response.text());
+            const error = new Error(response.statusText || `HTTP Error ${response.status}`);
+            error.status = response.status;
+            error.code = CONNECTION_ERROR_CODE;
+            throw new Error(error);
         } else {
             return response.json();
         }
