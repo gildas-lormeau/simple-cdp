@@ -266,14 +266,14 @@ declare class CDP extends CDPMembers {
    * @param targetId The ID of the target
    * @returns A promise that resolves when the target is activated
    */
-  static activateTarget(targetId: string): Promise<void>;
+  static activateTarget(targetId: string): Promise<string>;
   /**
    * Close a target
    *
    * @param targetId The ID of the target
    * @returns A promise that resolves when the target is closed
    */
-  static closeTarget(targetId: string): Promise<void>;
+  static closeTarget(targetId: string): Promise<string>;
 }
 
 /**
