@@ -137,11 +137,11 @@ class CDP {
     }
     static async activateTarget(targetId) {
         const { apiPathActivateTarget, apiUrl } = options;
-        await fetchData(new URL(`${apiPathActivateTarget}/${targetId}`, apiUrl), options);
+        await fetchData(new URL(`${apiPathActivateTarget}/${targetId}`, apiUrl), options, "GET", false);
     }
     static async closeTarget(targetId) {
         const { apiPathCloseTarget, apiUrl } = options;
-        await fetchData(new URL(`${apiPathCloseTarget}/${targetId}`, apiUrl), options);
+        await fetchData(new URL(`${apiPathCloseTarget}/${targetId}`, apiUrl), options, "GET", false);
     }
 }
 
@@ -207,7 +207,7 @@ class Connection extends EventTarget {
     }
 }
 
-function fetchData(url, options, method) {
+function fetchData(url, options, method = "GET", parseJSON = true) {
     return retryConnection(async () => {
         let response;
         try {
@@ -222,7 +222,11 @@ function fetchData(url, options, method) {
             error.code = CONNECTION_ERROR_CODE;
             throw new Error(error);
         } else {
-            return response.json();
+            if (parseJSON) {
+                return response.json();
+            } else {
+                return response.text();
+            }
         }
     }, options);
 }
