@@ -141,7 +141,7 @@ class CDP {
     }
     static async closeTarget(targetId) {
         const { apiPathCloseTarget, apiUrl } = options;
-        await fetchData(new URL(`${apiPathCloseTarget}/${targetId}`, apiUrl)), options;
+        await fetchData(new URL(`${apiPathCloseTarget}/${targetId}`, apiUrl), options);
     }
 }
 
