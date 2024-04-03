@@ -311,7 +311,7 @@ declare const CONNECTION_REFUSED_ERROR_CODE: string;
  */
 declare const CONNECTION_ERROR_CODE: string;
 
-export {
+export type {
   activateTarget,
   CDP,
   cdp,
