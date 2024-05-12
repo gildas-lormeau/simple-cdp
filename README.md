@@ -2,7 +2,7 @@
 
 simple-cdp is a JavaScript library to interact with the [Chrome DevTools Protocol](https://chromedevtools.github.io/devtools-protocol/).
 
-The implementation uses [Proxy](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Proxy) objects to expose APIs. This makes the implementation very light (around 250 lines of code) and independent of protocol evolutions.
+The implementation uses [Proxy](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Proxy) objects to expose APIs. This makes it very light (around 250 lines of code) and independent of protocol evolutions.
 
 # Install
 
