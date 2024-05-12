@@ -23,7 +23,29 @@ npm install simple-cdp
 # Usage example
 
 Start a Chromium-based browser with the switch `--remote-debugging-port=9222` and run the script below.
+```js
+// import the module (replace with "simple-cdp" if using NPM)
+import { createTarget, CDP } from "@simple-cdp/simple-cdp";
 
+// navigate to https://example.com
+const url = "https://example.com";
+const targetInfo = await createTarget(url);
+
+// create a CDP instance for the target
+const cdp = new CDP(targetInfo);
+
+// enable "Runtime" domain
+await cdp.Runtime.enable();
+
+// evaluate JavaScript expression
+const expression = "41 + 1";
+const { result } = await cdp.Runtime.evaluate({ expression });
+
+// display result in the console (i.e. 42)
+console.log(result.value);
+```
+
+You can also create a `CDP` instance automatically and manage the session ID.
 ```js
 // import the module (replace with "simple-cdp" if using NPM)
 import { cdp } from "@simple-cdp/simple-cdp";
@@ -60,27 +82,4 @@ async function onAttachedToTarget({ params }) {
     console.log(result.value);
   }
 }
-```
-
-You can also create a `CDP` instance from the target's information, which eliminates the need to manage the session ID.
-```js
-// import the module (replace with "simple-cdp" if using NPM)
-import { createTarget, CDP } from "@simple-cdp/simple-cdp";
-
-// navigate to https://example.com
-const url = "https://example.com";
-const targetInfo = await createTarget(url);
-
-// create a CDP instance for the target
-const cdp = new CDP(targetInfo);
-
-// enable "Runtime" domain
-await cdp.Runtime.enable();
-
-// evaluate JavaScript expression
-const expression = "41 + 1";
-const { result } = await cdp.Runtime.evaluate({ expression });
-
-// display result in the console (i.e. 42)
-console.log(result.value);
 ```
