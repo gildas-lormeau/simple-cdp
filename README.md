@@ -45,7 +45,7 @@ const { result } = await cdp.Runtime.evaluate({ expression });
 console.log(result.value);
 ```
 
-You can also create a `CDP` instance automatically and manage the session ID.
+You can also manage the session ID with auto-attached targets.
 ```js
 // import the module (replace with "simple-cdp" if using NPM)
 import { cdp } from "@simple-cdp/simple-cdp";
