@@ -8,6 +8,8 @@ const ERROR_EVENT = "error";
 const CONNECTION_REFUSED_ERROR_CODE = "ConnectionRefused";
 const CONNECTION_ERROR_CODE = "ConnectionError";
 const MIN_INVALID_HTTP_STATUS_CODE = 400;
+const GET_METHOD = "GET";
+const PUT_METHOD = "PUT";
 const DEFAULT_URL = "http://localhost:9222";
 const DEFAULT_PATH = "json/version";
 const DEFAULT_PATH_TARGETS = "json";
@@ -133,15 +135,15 @@ class CDP {
     static createTarget(url) {
         const { apiPathNewTarget, apiUrl } = options;
         const path = url ? `${apiPathNewTarget}?${url}` : apiPathNewTarget;
-        return fetchData(new URL(path, apiUrl), options, "PUT");
+        return fetchData(new URL(path, apiUrl), options, PUT_METHOD);
     }
     static async activateTarget(targetId) {
         const { apiPathActivateTarget, apiUrl } = options;
-        await fetchData(new URL(`${apiPathActivateTarget}/${targetId}`, apiUrl), options, "GET", false);
+        await fetchData(new URL(`${apiPathActivateTarget}/${targetId}`, apiUrl), options, GET_METHOD, false);
     }
     static async closeTarget(targetId) {
         const { apiPathCloseTarget, apiUrl } = options;
-        await fetchData(new URL(`${apiPathCloseTarget}/${targetId}`, apiUrl), options, "GET", false);
+        await fetchData(new URL(`${apiPathCloseTarget}/${targetId}`, apiUrl), options, GET_METHOD, false);
     }
 }
 
@@ -207,7 +209,7 @@ class Connection extends EventTarget {
     }
 }
 
-function fetchData(url, options, method = "GET", parseJSON = true) {
+function fetchData(url, options, method = GET_METHOD, parseJSON = true) {
     return retryConnection(async () => {
         let response;
         try {
