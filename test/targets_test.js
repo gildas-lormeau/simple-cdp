@@ -1,4 +1,4 @@
-import { assert, assertEquals, assertRejects } from "@std/assert";
+import { assert, assertEquals, assertNotEquals, assertRejects } from "@std/assert";
 import {
     activateTarget,
     closeTarget,
@@ -112,6 +112,65 @@ Deno.test("connection errors", async (test) => {
             async () => {
                 const error = await assertRejects(() => getTargets());
                 assertEquals(error.code, CONNECTION_REFUSED_ERROR_CODE);
+            }
+        );
+    });
+
+    // waiting is what can be cancelled, so the signal interrupts the retries
+    // instead of leaving the caller to wait them out
+    await test.step("stop retrying when the signal is aborted", async () => {
+        const apiUrl = `http://127.0.0.1:${getClosedPort()}`;
+        await withOptions(
+            options,
+            { apiUrl, connectionMaxRetry: 20, connectionRetryDelay: 500 },
+            async () => {
+                const controller = new AbortController();
+                const start = performance.now();
+                setTimeout(() => controller.abort(), 300);
+                const error = await assertRejects(() => getTargets({ signal: controller.signal }));
+                const elapsed = performance.now() - start;
+                assertEquals(error.name, "AbortError");
+                // without the signal this would run for 20 x 500ms
+                assert(elapsed < 3000, `gave up only after ${Math.round(elapsed)}ms`);
+            }
+        );
+    });
+
+    await test.step("give the deadline of an AbortSignal.timeout", async () => {
+        const apiUrl = `http://127.0.0.1:${getClosedPort()}`;
+        await withOptions(
+            options,
+            { apiUrl, connectionMaxRetry: 20, connectionRetryDelay: 500 },
+            async () => {
+                const error = await assertRejects(() => getTargets({ signal: AbortSignal.timeout(300) }));
+                assertEquals(error.name, "TimeoutError");
+            }
+        );
+    });
+
+    await test.step("reject with the reason of the signal", async () => {
+        const apiUrl = `http://127.0.0.1:${getClosedPort()}`;
+        await withOptions(options, { apiUrl }, async () => {
+            const controller = new AbortController();
+            controller.abort(new Error("shutting down"));
+            const error = await assertRejects(() => getTargets({ signal: controller.signal }));
+            assertEquals(error.message, "shutting down");
+        });
+    });
+
+    // an aborted request is not a browser that cannot be reached
+    await test.step("not retry an aborted request", async () => {
+        const apiUrl = `http://127.0.0.1:${getClosedPort()}`;
+        await withOptions(
+            options,
+            { apiUrl, connectionMaxRetry: 20, connectionRetryDelay: 500 },
+            async () => {
+                const controller = new AbortController();
+                controller.abort();
+                const start = performance.now();
+                const error = await assertRejects(() => getTargets({ signal: controller.signal }));
+                assertNotEquals(error.code, CONNECTION_REFUSED_ERROR_CODE);
+                assert(performance.now() - start < 1000, "the aborted request was retried");
             }
         );
     });

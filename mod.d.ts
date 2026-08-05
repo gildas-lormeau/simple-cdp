@@ -54,6 +54,24 @@ declare interface CDPOptions {
    * @defaultValue 500
    */
   connectionRetryDelay?: number;
+  /**
+   * The signal aborting the requests establishing the connection, and the wait
+   * between the retries
+   *
+   * The commands sent to the browser are not aborted, since the protocol cannot
+   * cancel them once they are sent.
+   */
+  signal?: AbortSignal;
+}
+
+/**
+ * Options of a request sent to the browser
+ */
+declare interface CDPRequestOptions {
+  /**
+   * The signal aborting the request, and the wait between the retries
+   */
+  signal?: AbortSignal;
 }
 
 /**
@@ -284,7 +302,7 @@ declare class CDP extends CDPMembers {
    *
    * @returns The targets
    */
-  static getTargets(): Promise<CDPTargetInfo[]>;
+  static getTargets(options?: CDPRequestOptions): Promise<CDPTargetInfo[]>;
   /**
    * Create a target
    *
@@ -292,21 +310,30 @@ declare class CDP extends CDPMembers {
    *
    * @returns The target info
    */
-  static createTarget(url?: string): Promise<CDPTargetInfo>;
+  static createTarget(
+    url?: string,
+    options?: CDPRequestOptions,
+  ): Promise<CDPTargetInfo>;
   /**
    * Activate a target
    *
    * @param targetId The ID of the target
    * @returns A promise that resolves when the target is activated
    */
-  static activateTarget(targetId: string): Promise<void>;
+  static activateTarget(
+    targetId: string,
+    options?: CDPRequestOptions,
+  ): Promise<void>;
   /**
    * Close a target
    *
    * @param targetId The ID of the target
    * @returns A promise that resolves when the target is closed
    */
-  static closeTarget(targetId: string): Promise<void>;
+  static closeTarget(
+    targetId: string,
+    options?: CDPRequestOptions,
+  ): Promise<void>;
 }
 
 /**
@@ -363,6 +390,7 @@ export {
 
 export type {
   CDPConnection,
+  CDPRequestOptions,
   CDPDomain,
   CDPEvent,
   CDPEventListener,

@@ -216,22 +216,24 @@ class CDP extends EventTarget {
         // the reset is synchronous, so the instance is disposable with `using`
         this.reset();
     }
-    static getTargets() {
+    static getTargets(requestOptions) {
         const { apiPathTargets, apiUrl } = options;
-        return fetchData(new URL(apiPathTargets, apiUrl), options);
+        return fetchData(new URL(apiPathTargets, apiUrl), getRequestOptions(requestOptions));
     }
-    static createTarget(url) {
+    static createTarget(url, requestOptions) {
         const { apiPathNewTarget, apiUrl } = options;
         const path = url ? `${apiPathNewTarget}?${encodeURIComponent(url)}` : apiPathNewTarget;
-        return fetchData(new URL(path, apiUrl), options, PUT_METHOD);
+        return fetchData(new URL(path, apiUrl), getRequestOptions(requestOptions), PUT_METHOD);
     }
-    static async activateTarget(targetId) {
+    static async activateTarget(targetId, requestOptions) {
         const { apiPathActivateTarget, apiUrl } = options;
-        await fetchData(new URL(`${apiPathActivateTarget}/${targetId}`, apiUrl), options, GET_METHOD, false);
+        const url = new URL(`${apiPathActivateTarget}/${targetId}`, apiUrl);
+        await fetchData(url, getRequestOptions(requestOptions), GET_METHOD, false);
     }
-    static async closeTarget(targetId) {
+    static async closeTarget(targetId, requestOptions) {
         const { apiPathCloseTarget, apiUrl } = options;
-        await fetchData(new URL(`${apiPathCloseTarget}/${targetId}`, apiUrl), options, GET_METHOD, false);
+        const url = new URL(`${apiPathCloseTarget}/${targetId}`, apiUrl);
+        await fetchData(url, getRequestOptions(requestOptions), GET_METHOD, false);
     }
 }
 
@@ -372,12 +374,22 @@ function getConnectionClosedError(method, params, sessionId, reason) {
     return error;
 }
 
+function getRequestOptions(requestOptions) {
+    return requestOptions === UNDEFINED_VALUE ? options : Object.assign({}, options, requestOptions);
+}
+
 function fetchData(url, options, method = GET_METHOD, parseJSON = true) {
+    const { signal } = options;
     return retryConnection(async () => {
         let response;
         try {
-            response = await fetch(url, { method });
+            response = await fetch(url, { method, signal });
         } catch (error) {
+            // an aborted request is not a browser that cannot be reached, so it
+            // must not be retried
+            if (signal !== UNDEFINED_VALUE && signal.aborted) {
+                throw signal.reason;
+            }
             error.code = CONNECTION_REFUSED_ERROR_CODE;
             throw error;
         }
@@ -397,15 +409,39 @@ function fetchData(url, options, method = GET_METHOD, parseJSON = true) {
 }
 
 async function retryConnection(fn, options, retryCount = 0) {
-    const { connectionMaxRetry, connectionRetryDelay } = options;
+    const { connectionMaxRetry, connectionRetryDelay, signal } = options;
     try {
         return await fn();
     } catch (error) {
         if (error.code == CONNECTION_REFUSED_ERROR_CODE && retryCount < connectionMaxRetry) {
-            await new Promise((resolve) => setTimeout(resolve, connectionRetryDelay));
+            // waiting is what the signal cancels, so the delay is interrupted
+            // rather than run to completion before giving up
+            await delay(connectionRetryDelay, signal);
             return retryConnection(fn, options, retryCount + 1);
         } else {
             throw error;
         }
     }
+}
+
+function delay(timeout, signal) {
+    return new Promise((resolve, reject) => {
+        if (signal !== UNDEFINED_VALUE) {
+            if (signal.aborted) {
+                reject(signal.reason);
+                return;
+            }
+            const onAbort = () => {
+                clearTimeout(timeoutId);
+                reject(signal.reason);
+            };
+            const timeoutId = setTimeout(() => {
+                signal.removeEventListener(ABORT_EVENT, onAbort);
+                resolve();
+            }, timeout);
+            signal.addEventListener(ABORT_EVENT, onAbort, ONCE_OPTION);
+        } else {
+            setTimeout(resolve, timeout);
+        }
+    });
 }
