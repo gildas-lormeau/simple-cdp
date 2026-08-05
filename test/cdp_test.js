@@ -184,6 +184,43 @@ Deno.test("events", async (test) => {
             cdp.reset();
         });
 
+        // regression: the event data used to be assigned as writable properties,
+        // so a listener could rewrite what the next ones received
+        await test.step("protects the event data from the listeners", async () => {
+            const stub = startStubServer((socket) =>
+                socket.addEventListener("message", ({ data }) => {
+                    socket.send(JSON.stringify({ id: JSON.parse(data).id, result: {} }));
+                    socket.send(JSON.stringify({
+                        method: "Page.loadEventFired",
+                        params: { real: 1 },
+                        sessionId: "abc"
+                    }));
+                })
+            );
+            try {
+                const cdp = new CDP({ webSocketDebuggerUrl: stub.webSocketDebuggerUrl });
+                const received = Promise.withResolvers();
+                cdp.Page.addEventListener("loadEventFired", (event) => {
+                    try {
+                        event.params = { hijacked: true };
+                        event.sessionId = "spoofed";
+                    } catch {
+                        // read-only in strict mode
+                    }
+                });
+                cdp.Page.addEventListener("loadEventFired", (event) => received.resolve(event));
+                await cdp.Browser.getVersion();
+                const event = await received.promise;
+                assertEquals(event.params, { real: 1 });
+                assertEquals(event.sessionId, "abc");
+                assertEquals(event.type, "Page.loadEventFired");
+                assert(event instanceof Event);
+                cdp.reset();
+            } finally {
+                await stub.close();
+            }
+        });
+
         // the listener options are forwarded to the connection, so they behave
         // as they do on any EventTarget
         await test.step("honours the once option", async () => {

@@ -113,21 +113,20 @@ declare interface CDPConnection extends EventTarget {
 
 /**
  * Event of domain event listeners
+ *
+ * The data is read-only, as in the events of the platform, so that a listener
+ * cannot alter what the next ones receive.
  */
-declare interface CDPEvent {
-  /**
-   * The event type
-   */
-  type: string;
+declare interface CDPEvent extends Event {
   /**
    * The parameters
    */
   // deno-lint-ignore no-explicit-any
-  params: any;
+  readonly params: any;
   /**
    * The session ID
    */
-  sessionId?: string;
+  readonly sessionId?: string;
 }
 
 /**

@@ -306,10 +306,31 @@ class Connection extends EventTarget {
             }
         }
         if (method !== UNDEFINED_VALUE) {
-            const event = new Event(method);
-            Object.assign(event, { params, sessionId });
-            this.dispatchEvent(event);
+            this.dispatchEvent(new CDPEvent(method, { params, sessionId }));
         }
+    }
+}
+
+/**
+ * The event dispatched to the domain event listeners
+ *
+ * The data is exposed through getters, as in the events of the platform, so
+ * that a listener cannot alter what the next ones receive.
+ */
+class CDPEvent extends Event {
+    #params;
+    #sessionId;
+
+    constructor(type, eventInit = {}) {
+        super(type, eventInit);
+        this.#params = eventInit.params;
+        this.#sessionId = eventInit.sessionId;
+    }
+    get params() {
+        return this.#params;
+    }
+    get sessionId() {
+        return this.#sessionId;
     }
 }
 
