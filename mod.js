@@ -31,12 +31,13 @@ const DEFAULT_OPTIONS = {
 
 class CDP {
     #connection;
-    #options = Object.assign({}, options);
+    #options;
     #pendingEventListenerCalls = new Map();
 
-    constructor(options) {
+    constructor(instanceOptions) {
         // deno-lint-ignore no-this-alias
         const cdp = this;
+        cdp.#options = instanceOptions === UNDEFINED_VALUE ? options : Object.assign({}, options, instanceOptions);
         const proxy = new Proxy(Object.create(null), {
             get(target, propertyName) {
                 if (propertyName in cdp) {
@@ -47,9 +48,16 @@ class CDP {
                 } else {
                     return getDomain(target, propertyName);
                 }
+            },
+            set(target, propertyName, value) {
+                if (propertyName in cdp) {
+                    cdp[propertyName] = value;
+                } else {
+                    target[propertyName] = value;
+                }
+                return true;
             }
         });
-        Object.assign(cdp.#options, options);
         return proxy;
 
         function getDomain(target, domainName) {
@@ -149,7 +157,7 @@ class CDP {
 }
 
 const options = Object.assign({}, DEFAULT_OPTIONS);
-const cdp = new CDP(options);
+const cdp = new CDP();
 const getTargets = CDP.getTargets;
 const createTarget = CDP.createTarget;
 const activateTarget = CDP.activateTarget;
