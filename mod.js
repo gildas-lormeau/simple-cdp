@@ -40,7 +40,8 @@ class CDP {
         const proxy = new Proxy(Object.create(null), {
             get(target, propertyName) {
                 if (propertyName in cdp) {
-                    return cdp[propertyName];
+                    const member = cdp[propertyName];
+                    return typeof member === "function" ? member.bind(cdp) : member;
                 } else if (propertyName in target) {
                     return target[propertyName];
                 } else {
