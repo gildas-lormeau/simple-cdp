@@ -1,5 +1,3 @@
-/// <reference types="../mod.d.ts" />
-
 import { assert, assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { CDP } from "../mod.js";
 import { attachToPage, launchBrowser, settlesWithin } from "./helpers.js";

@@ -1,5 +1,3 @@
-/// <reference types="../mod.d.ts" />
-
 import { assert, assertEquals, assertRejects } from "@std/assert";
 import {
     activateTarget,

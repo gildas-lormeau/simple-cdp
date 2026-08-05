@@ -1,5 +1,3 @@
-/// <reference types="../mod.d.ts" />
-
 const CHROME_PATHS = {
     darwin: [
         "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",

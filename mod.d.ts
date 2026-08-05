@@ -31,7 +31,7 @@ declare interface CDPOptions {
    */
   apiPathNewTarget?: string;
   /**
-   * The path to activate a ‡target
+   * The path to activate a target
    *
    * @defaultValue "json/activate"
    */
@@ -63,6 +63,8 @@ declare type CDPValue =
   | string
   | number
   | boolean
+  | null
+  | undefined
   | CDPValue[]
   | { [key: string]: CDPValue };
 
@@ -92,13 +94,13 @@ declare interface CDPConnection extends EventTarget {
    *
    * @param method The method of the message
    * @param params The parameters of the message
-   * @param sesssionId The session ID of the message
+   * @param sessionId The session ID of the message
    * @returns The response
    */
   sendMessage(
     method: string,
-    params: CDPObject,
-    sesssionId?: string,
+    params?: CDPObject,
+    sessionId?: string,
     // deno-lint-ignore no-explicit-any
   ): Promise<any>;
   /**
@@ -173,7 +175,7 @@ declare type CDPDomainMethods = {
    * @param sessionId The session ID
    * @returns The result
    */
-  [Key in Exclude<string, keyof CDPDomainListeners> as Uncapitalize<Key>]: (
+  [Key in string as Uncapitalize<Key>]: (
     args?: CDPObject | null,
     sessionId?: string,
     // deno-lint-ignore no-explicit-any
@@ -205,10 +207,11 @@ declare class CDPMembers {
 
 /**
  * Property key of a domain (e.g. "Page", "Target", "Runtime"...)
+ *
+ * Only capitalized keys are domains, which is what keeps them apart from the
+ * members of {@link CDPMembers}
  */
-declare type CDPDomainPropertyKey = Capitalize<
-  Exclude<string, keyof CDPMembers>
->;
+declare type CDPDomainPropertyKey = Capitalize<string>;
 
 /**
  * Target info
@@ -227,6 +230,10 @@ declare interface CDPTargetInfo {
    */
   title: string;
   /**
+   * The target description
+   */
+  description: string;
+  /**
    * The target URL
    */
   url: string;
@@ -234,6 +241,14 @@ declare interface CDPTargetInfo {
    * The target WebSocket URL
    */
   webSocketDebuggerUrl: string;
+  /**
+   * The URL of the DevTools front-end for the target
+   */
+  devtoolsFrontendUrl: string;
+  /**
+   * The ID of the parent target, when the target has one
+   */
+  parentId?: string;
 }
 
 /**
@@ -270,14 +285,14 @@ declare class CDP extends CDPMembers {
    * @param targetId The ID of the target
    * @returns A promise that resolves when the target is activated
    */
-  static activateTarget(targetId: string): Promise<string>;
+  static activateTarget(targetId: string): Promise<void>;
   /**
    * Close a target
    *
    * @param targetId The ID of the target
    * @returns A promise that resolves when the target is closed
    */
-  static closeTarget(targetId: string): Promise<string>;
+  static closeTarget(targetId: string): Promise<void>;
 }
 
 /**

@@ -1,5 +1,3 @@
-/// <reference types="../mod.d.ts" />
-
 import { assert, assertEquals, assertNotEquals } from "@std/assert";
 import { CDP, cdp, getTargets, options } from "../mod.js";
 import { launchBrowser, withOptions } from "./helpers.js";
