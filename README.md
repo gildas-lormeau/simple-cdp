@@ -176,6 +176,7 @@ options.apiUrl = "http://localhost:9223";
 | `apiPathCloseTarget` | `"json/close"` | Path used by `closeTarget()` |
 | `connectionMaxRetry` | `20` | Number of attempts when the browser cannot be reached |
 | `connectionRetryDelay` | `500` | Delay between attempts, in milliseconds |
+| `signal` | | Signal aborting the requests opening the connection |
 
 A `CDP` instance created with an argument gets its own options, merging the shared ones with those passed to the constructor. Changing them does not affect the `cdp` instance.
 
@@ -185,7 +186,42 @@ const cdp = new CDP({ apiUrl: "http://localhost:9223" });
 
 # Connection and errors
 
-The connection opens on the first call and stays open. If it is lost, the next call opens a new one and the event listeners are registered again. Calling `reset()` closes the connection and removes the event listeners.
+The connection opens on the first call and stays open. If it is lost, the next
+call opens a new one and the event listeners are registered again. Calling
+`reset()` closes the connection and removes the event listeners.
+
+The instance reports the lifecycle, so a connection lost and reopened on its own
+does not go unnoticed.
+
+```js
+cdp.addEventListener("open", () => console.log("connected"));
+cdp.addEventListener("close", ({ reason }) => console.log("disconnected", reason));
+```
+
+An instance is disposable, so declaring it with `using` closes the connection
+when it goes out of scope, including when the block throws.
+
+```js
+using cdp = new CDP(targetInfo);
+await cdp.Runtime.enable();
+// the connection is closed here
+```
+
+The requests opening the connection can be aborted with a signal, which also
+interrupts the wait between the retries. The commands sent to the browser are
+not abortable, since the protocol cannot cancel them once they are sent.
+
+```js
+// give up after 5 seconds instead of retrying `connectionMaxRetry` times
+const targets = await getTargets({ signal: AbortSignal.timeout(5000) });
+
+// or abort every attempt made by an instance
+const cdp = new CDP({ signal: controller.signal });
+```
+
+The rejection carries the reason of the signal, which is a `TimeoutError` for
+[AbortSignal.timeout()](https://developer.mozilla.org/docs/Web/API/AbortSignal/timeout_static)
+and an `AbortError` otherwise.
 
 Rejected calls carry a `code` property. Protocol errors use the code returned by the browser (e.g. `-32601` when the method does not exist), and connection errors use one of the exported codes.
 
