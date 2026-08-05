@@ -30,5 +30,9 @@
     },
     "bugs": {
         "url": "https://github.com/gildas-lormeau/simple-cdp/issues"
-    }
+    },
+    "files": [
+        "mod.js",
+        "mod.d.ts"
+    ]
 }
