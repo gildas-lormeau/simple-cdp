@@ -1,6 +1,6 @@
 import { assert, assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { CDP } from "../mod.js";
-import { attachToPage, launchBrowser, settlesWithin } from "./helpers.js";
+import { attachToPage, launchBrowser, settlesWithin, startStubServer } from "./helpers.js";
 
 Deno.test("protocol", async (test) => {
     const browser = await launchBrowser();
@@ -77,6 +77,34 @@ Deno.test("protocol", async (test) => {
             const cdp = new CDP({ apiUrl });
             assertEquals(typeof cdp.Page.addEventListener, "function");
             assertEquals(typeof cdp.Page.removeEventListener, "function");
+        });
+
+        // regression: stringifying or serializing a domain used to resolve
+        // toString, valueOf and toJSON to commands, sending them to the browser
+        // and throwing when the result was not a primitive
+        await test.step("describes a domain without sending a command", async () => {
+            const sent = [];
+            const stub = startStubServer((socket) =>
+                socket.addEventListener("message", ({ data }) => {
+                    const { id, method } = JSON.parse(data);
+                    sent.push(method);
+                    socket.send(JSON.stringify({ id, result: {} }));
+                })
+            );
+            try {
+                const cdp = new CDP({ webSocketDebuggerUrl: stub.webSocketDebuggerUrl });
+                await cdp.Browser.getVersion();
+                sent.length = 0;
+                assertEquals(`${cdp.Page}`, "[CDPDomain Page]");
+                assertEquals(String(cdp.Target), "[CDPDomain Target]");
+                assertEquals(cdp.Page + "", "[CDPDomain Page]");
+                assertEquals(JSON.stringify(cdp.Page), "{}");
+                assertEquals(cdp.Page.then, undefined);
+                assertEquals(sent, []);
+                cdp.reset();
+            } finally {
+                await stub.close();
+            }
         });
     } finally {
         await browser.close();

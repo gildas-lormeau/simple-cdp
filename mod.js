@@ -11,6 +11,10 @@ const CONNECTION_CLOSED_ERROR_CODE = "ConnectionClosed";
 const ADD_EVENT_LISTENER_METHOD = "addEventListener";
 const REMOVE_EVENT_LISTENER_METHOD = "removeEventListener";
 const THEN_PROPERTY = "then";
+const TO_STRING_METHOD = "toString";
+const VALUE_OF_METHOD = "valueOf";
+const TO_JSON_METHOD = "toJSON";
+const DOMAIN_TAG = "CDPDomain";
 const MIN_INVALID_HTTP_STATUS_CODE = 400;
 const GET_METHOD = "GET";
 const PUT_METHOD = "PUT";
@@ -66,20 +70,22 @@ class CDP {
         return proxy;
 
         function getDomain(target, domainName) {
-            // the listeners are kept out of the proxy handler, so that the traps
-            // are not reachable as domain methods
-            const listeners = Object.assign(Object.create(null), {
+            // a domain resolves any name to a method, so the members kept out of
+            // the proxy handler are the ones that must never become a command:
+            // the listener methods, and the names JavaScript looks up implicitly
+            // when a value is awaited, stringified or serialized
+            const members = Object.assign(Object.create(null), {
                 [ADD_EVENT_LISTENER_METHOD]: getDomainListenerFunction(ADD_EVENT_LISTENER_METHOD, domainName),
-                [REMOVE_EVENT_LISTENER_METHOD]: getDomainListenerFunction(REMOVE_EVENT_LISTENER_METHOD, domainName)
+                [REMOVE_EVENT_LISTENER_METHOD]: getDomainListenerFunction(REMOVE_EVENT_LISTENER_METHOD, domainName),
+                [TO_STRING_METHOD]: () => `[${DOMAIN_TAG} ${domainName}]`,
+                [THEN_PROPERTY]: UNDEFINED_VALUE,
+                [VALUE_OF_METHOD]: UNDEFINED_VALUE,
+                [TO_JSON_METHOD]: UNDEFINED_VALUE
             });
             target[domainName] = new Proxy(Object.create(null), {
                 get(target, methodName) {
-                    if (typeof methodName !== "string" || methodName === THEN_PROPERTY) {
-                        // a domain resolves any name to a method, which would
-                        // otherwise make it look like a promise
-                        return UNDEFINED_VALUE;
-                    } else if (methodName in listeners) {
-                        return listeners[methodName];
+                    if (typeof methodName !== "string" || methodName in members) {
+                        return members[methodName];
                     } else if (methodName in target) {
                         return target[methodName];
                     } else {
