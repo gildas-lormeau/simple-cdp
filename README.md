@@ -55,24 +55,79 @@ const { result } = await cdp.Runtime.evaluate({ expression });
 console.log(result.value);
 ```
 
-You can also manage the session ID with auto-attached targets.
+# Driving several targets
+
+The `cdp` instance is connected to the browser itself. Attach to a target to get
+a session ID, and pass it as the last argument of the methods to address that
+target. One connection then drives as many targets as needed.
+
 ```js
 // import the module (replace with "simple-cdp" if using NPM)
 import { cdp } from "@simple-cdp/simple-cdp";
 
-// enable auto-attach to new targets
+// create a target and attach to it
+const url = "https://example.com";
+const { targetId } = await cdp.Target.createTarget({ url });
+const { sessionId } = await cdp.Target.attachToTarget({
+  targetId,
+  flatten: true
+});
+
+// enable "Runtime" domain for that target
+await cdp.Runtime.enable(null, sessionId);
+
+// evaluate JavaScript expression in that target
+const expression = "41 + 1";
+const { result } = await cdp.Runtime.evaluate({ expression }, sessionId);
+
+// display result in the console (i.e. 42)
+console.log(result.value);
+
+// close the target
+await cdp.Target.closeTarget({ targetId });
+```
+
+# Waiting for an event
+
+The methods resolve when the browser answers the command, which is not the same
+as the browser finishing the work. Wait for the matching event instead, with the
+`once` option of the listener.
+
+```js
+// register the listener before triggering the navigation
+const loaded = new Promise((resolve) =>
+  cdp.Page.addEventListener("loadEventFired", resolve, { once: true }));
+
+await cdp.Page.enable(null, sessionId);
+await cdp.Page.navigate({ url }, sessionId);
+
+// wait for the page to be loaded
+await loaded;
+```
+
+The listeners accept the options of
+[EventTarget](https://developer.mozilla.org/docs/Web/API/EventTarget/addEventListener),
+so `signal` can be used to remove them.
+
+# Attaching to targets automatically
+
+When targets are created by the page rather than by the script, for example when
+it opens a window, their IDs are unknown. Auto-attach reports a session for each
+target as it appears.
+
+```js
+// import the module (replace with "simple-cdp" if using NPM)
+import { cdp } from "@simple-cdp/simple-cdp";
+
+// add event listener triggered when a session is attached to a target
+cdp.Target.addEventListener("attachedToTarget", onAttachedToTarget);
+
+// attach to the targets as they are created
 await cdp.Target.setAutoAttach({
   autoAttach: true,
   flatten: true,
   waitForDebuggerOnStart: false
 });
-
-// add event listener triggered when a session is attached to a target
-cdp.Target.addEventListener("attachedToTarget", onAttachedToTarget);
-
-// create a new target and navigate to https://example.com
-const url = "https://example.com";
-await cdp.Target.createTarget({ url });
 
 async function onAttachedToTarget({ params }) {
   // get session ID
@@ -93,6 +148,10 @@ async function onAttachedToTarget({ params }) {
   }
 }
 ```
+
+Set `waitForDebuggerOnStart` to `true` to pause each target until
+`Runtime.runIfWaitingForDebugger` is called, in order to set it up before it
+runs any script.
 
 # Options
 
