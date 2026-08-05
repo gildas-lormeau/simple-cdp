@@ -194,8 +194,12 @@ declare type CDPDomain = CDPDomainListeners & CDPDomainMethods;
 
 /**
  * Members of the API
+ *
+ * The instance dispatches an `open` event whenever a connection is established,
+ * including the ones replacing a connection that was lost, and a
+ * {@link CloseEvent} named `close` whenever it is closed.
  */
-declare class CDPMembers {
+declare class CDPMembers extends EventTarget {
   /**
    * The options
    */

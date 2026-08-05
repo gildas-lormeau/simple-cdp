@@ -39,13 +39,14 @@ const DEFAULT_OPTIONS = {
     connectionRetryDelay: DEFAULT_CONNECTION_RETRY_DELAY
 };
 
-class CDP {
+class CDP extends EventTarget {
     #connection;
     #connectionPromise;
     #options;
     #eventListeners = [];
 
     constructor(instanceOptions) {
+        super();
         // deno-lint-ignore no-this-alias
         const cdp = this;
         cdp.#options = instanceOptions === UNDEFINED_VALUE ? options : Object.assign({}, options, instanceOptions);
@@ -177,12 +178,20 @@ class CDP {
             }
             const connection = new Connection(webSocketDebuggerUrl);
             await connection.open();
+            // the connection is replaced when it closes, so the events are
+            // relayed by the instance, which outlives it
+            connection.addEventListener(
+                CLOSE_EVENT,
+                ({ reason }) => cdp.dispatchEvent(new CloseEvent(CLOSE_EVENT, { reason })),
+                ONCE_OPTION
+            );
             // the listeners are registered against the connection, so they are
             // reapplied whenever a new one replaces a closed one
             for (const eventListener of [...cdp.#eventListeners]) {
                 addEventListener(connection, eventListener);
             }
             cdp.#connection = connection;
+            cdp.dispatchEvent(new Event(OPEN_EVENT));
         }
     }
     get options() {
@@ -285,6 +294,9 @@ class Connection extends EventTarget {
                 this.#pendingRequests.delete(id);
                 reject(getConnectionClosedError(method, params, sessionId, reason));
             }
+            // the pending calls are settled first, so that the listeners observe
+            // a connection that is done rather than one still draining
+            this.dispatchEvent(new CloseEvent(CLOSE_EVENT, { reason }));
         }
     }
     #onMessage({ id, method, result, error, params, sessionId }) {

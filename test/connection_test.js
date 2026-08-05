@@ -1,6 +1,6 @@
 import { assert, assertEquals, assertNotEquals, assertRejects } from "@std/assert";
 import { CDP, CONNECTION_CLOSED_ERROR_CODE, closeTarget, createTarget, options } from "../mod.js";
-import { launchBrowser, settlesWithin, startStubServer, withOptions } from "./helpers.js";
+import { launchBrowser, settlesWithin, startStubServer, waitFor, withOptions } from "./helpers.js";
 
 const SETTLE_TIMEOUT = 4000;
 
@@ -133,6 +133,54 @@ Deno.test("reconnection", async (test) => {
             await cdp.Browser.getVersion();
             cdp.connection.dispatchEvent(new Event("Page.loadEventFired"));
             assertEquals(count, 0);
+            cdp.reset();
+        });
+
+        // the connection is replaced when it is lost, so the lifecycle is
+        // observable on the instance, which outlives it
+        await test.step("reports the connection lifecycle on the instance", async () => {
+            const cdp = new CDP({ apiUrl });
+            const lifecycle = [];
+            cdp.addEventListener("open", () => lifecycle.push("open"));
+            cdp.addEventListener("close", () => lifecycle.push("close"));
+            await cdp.Browser.getVersion();
+            cdp.connection.close();
+            await cdp.Browser.getVersion();
+            cdp.reset();
+            await waitFor(() => lifecycle.length === 4);
+            assertEquals(lifecycle, ["open", "close", "open", "close"]);
+        });
+
+        await test.step("exposes the current connection when open is dispatched", async () => {
+            const cdp = new CDP({ apiUrl });
+            let connected;
+            cdp.addEventListener("open", () => (connected = cdp.connection !== undefined));
+            await cdp.Browser.getVersion();
+            assertEquals(connected, true);
+            cdp.reset();
+        });
+
+        await test.step("dispatches a CloseEvent carrying the reason", async () => {
+            const cdp = new CDP({ apiUrl });
+            const closed = Promise.withResolvers();
+            cdp.addEventListener("close", (event) => closed.resolve(event));
+            await cdp.Browser.getVersion();
+            cdp.reset();
+            const event = await closed.promise;
+            assert(event instanceof CloseEvent);
+            assertEquals(event.type, "close");
+            assertEquals(typeof event.reason, "string");
+        });
+
+        // the lifecycle listeners belong to the instance, not to the connection
+        await test.step("keeps the lifecycle listeners across reset()", async () => {
+            const cdp = new CDP({ apiUrl });
+            let opened = 0;
+            cdp.addEventListener("open", () => opened++);
+            await cdp.Browser.getVersion();
+            cdp.reset();
+            await cdp.Browser.getVersion();
+            assertEquals(opened, 2);
             cdp.reset();
         });
 
