@@ -1,6 +1,6 @@
 {
 	"name": "@simple-cdp/simple-cdp",
-	"version": "1.8.6",
+	"version": "1.9.0",
 	"exports": "./mod.js",
 	"imports": {
 		"@std/assert": "jsr:@std/assert@^1"
