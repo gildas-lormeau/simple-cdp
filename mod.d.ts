@@ -209,6 +209,11 @@ declare class CDPMembers {
    * Reset the connection
    */
   reset(): void;
+  /**
+   * Reset the connection when the instance goes out of scope, so that it can be
+   * declared with `using`
+   */
+  [Symbol.dispose](): void;
 }
 
 /**

@@ -280,6 +280,44 @@ Deno.test("instance members", async (test) => {
             cdp.reset();
         });
 
+        // the instance is disposable, so it can be declared with `using`
+        await test.step("closes the connection when disposed", async () => {
+            let connection;
+            {
+                using cdp = new CDP({ apiUrl });
+                await cdp.Browser.getVersion();
+                connection = cdp.connection;
+                assertEquals(connection.closed, false);
+            }
+            assertEquals(connection.closed, true);
+        });
+
+        await test.step("disposes when the block throws", async () => {
+            let connection;
+            try {
+                using cdp = new CDP({ apiUrl });
+                await cdp.Browser.getVersion();
+                connection = cdp.connection;
+                throw new Error("failure inside the block");
+            } catch {
+                // the disposal runs before the error propagates
+            }
+            assertEquals(connection.closed, true);
+        });
+
+        await test.step("disposes to the same state as reset()", async () => {
+            const cdp = new CDP({ apiUrl });
+            let count = 0;
+            cdp.Page.addEventListener("loadEventFired", () => count++);
+            await cdp.Browser.getVersion();
+            cdp[Symbol.dispose]();
+            assertEquals(cdp.connection, undefined);
+            await cdp.Browser.getVersion();
+            cdp.connection.dispatchEvent(new Event("Page.loadEventFired"));
+            assertEquals(count, 0);
+            cdp.reset();
+        });
+
         await test.step("sends commands through an explicit webSocketDebuggerUrl", async () => {
             const discovery = new CDP({ apiUrl });
             await discovery.Browser.getVersion();

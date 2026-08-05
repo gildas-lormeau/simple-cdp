@@ -203,6 +203,10 @@ class CDP {
         // following a connection lost on its own
         this.#eventListeners.length = 0;
     }
+    [Symbol.dispose]() {
+        // the reset is synchronous, so the instance is disposable with `using`
+        this.reset();
+    }
     static getTargets() {
         const { apiPathTargets, apiUrl } = options;
         return fetchData(new URL(apiPathTargets, apiUrl), options);
