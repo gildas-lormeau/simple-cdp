@@ -223,7 +223,7 @@ function fetchData(url, options, method = GET_METHOD, parseJSON = true) {
             const error = new Error(response.statusText || `HTTP Error ${response.status}`);
             error.status = response.status;
             error.code = CONNECTION_ERROR_CODE;
-            throw new Error(error);
+            throw error;
         } else {
             if (parseJSON) {
                 return response.json();
