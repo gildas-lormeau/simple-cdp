@@ -45,6 +45,13 @@ async function accepted() {
     };
     cdp.Page.addEventListener("loadEventFired", listener);
     cdp.Page.removeEventListener("loadEventFired", listener);
+    // the listener options mirror EventTarget
+    cdp.Page.addEventListener("loadEventFired", listener, { once: true });
+    cdp.Page.addEventListener("loadEventFired", listener, { signal: AbortSignal.timeout(1) });
+    cdp.Page.addEventListener("loadEventFired", listener, { capture: true });
+    cdp.Page.addEventListener("loadEventFired", listener, true);
+    cdp.Page.removeEventListener("loadEventFired", listener, { capture: true });
+    cdp.Page.removeEventListener("loadEventFired", listener, false);
 
     // instance members
     const instance = new CDP({ apiUrl: "http://127.0.0.1:9222" });

@@ -15,6 +15,8 @@ const TO_STRING_METHOD = "toString";
 const VALUE_OF_METHOD = "valueOf";
 const TO_JSON_METHOD = "toJSON";
 const DOMAIN_TAG = "CDPDomain";
+const ABORT_EVENT = "abort";
+const ONCE_OPTION = { once: true };
 const MIN_INVALID_HTTP_STATUS_CODE = 400;
 const GET_METHOD = "GET";
 const PUT_METHOD = "PUT";
@@ -105,21 +107,54 @@ class CDP {
         }
 
         function getDomainListenerFunction(methodName, domainName) {
-            return (type, listener) => {
+            return (type, listener, options) => {
                 const eventType = `${domainName}.${type}`;
                 if (methodName === ADD_EVENT_LISTENER_METHOD) {
-                    cdp.#eventListeners.push({ eventType, listener });
+                    const eventListener = { eventType, listener, options };
+                    cdp.#eventListeners.push(eventListener);
+                    const signal = getListenerSignal(options);
+                    if (signal !== UNDEFINED_VALUE) {
+                        signal.addEventListener(ABORT_EVENT, () => forgetEventListener(eventListener), ONCE_OPTION);
+                    }
+                    if (cdp.#connection !== UNDEFINED_VALUE) {
+                        addEventListener(cdp.#connection, eventListener);
+                    }
                 } else {
+                    // a listener is identified by its type, its callback and the
+                    // capture flag, as in the DOM
+                    const capture = getListenerCapture(options);
                     const index = cdp.#eventListeners.findIndex((eventListener) =>
-                        eventListener.eventType === eventType && eventListener.listener === listener);
+                        eventListener.eventType === eventType &&
+                        eventListener.listener === listener &&
+                        getListenerCapture(eventListener.options) === capture);
                     if (index !== -1) {
                         cdp.#eventListeners.splice(index, 1);
                     }
-                }
-                if (cdp.#connection !== UNDEFINED_VALUE) {
-                    cdp.#connection[methodName](eventType, listener);
+                    if (cdp.#connection !== UNDEFINED_VALUE) {
+                        cdp.#connection.removeEventListener(eventType, listener, options);
+                    }
                 }
             };
+        }
+
+        function addEventListener(connection, eventListener) {
+            const { eventType, listener, options } = eventListener;
+            connection.addEventListener(eventType, listener, options);
+            if (getListenerOnce(options)) {
+                // the connection drops the listener once it has run, so it must
+                // not be registered again on the connection replacing it
+                connection.addEventListener(eventType, () => forgetEventListener(eventListener), {
+                    once: true,
+                    capture: getListenerCapture(options)
+                });
+            }
+        }
+
+        function forgetEventListener(eventListener) {
+            const index = cdp.#eventListeners.indexOf(eventListener);
+            if (index !== -1) {
+                cdp.#eventListeners.splice(index, 1);
+            }
         }
 
         function ready() {
@@ -144,8 +179,8 @@ class CDP {
             await connection.open();
             // the listeners are registered against the connection, so they are
             // reapplied whenever a new one replaces a closed one
-            for (const { eventType, listener } of cdp.#eventListeners) {
-                connection.addEventListener(eventType, listener);
+            for (const eventListener of [...cdp.#eventListeners]) {
+                addEventListener(connection, eventListener);
             }
             cdp.#connection = connection;
         }
@@ -272,6 +307,18 @@ class Connection extends EventTarget {
             this.dispatchEvent(event);
         }
     }
+}
+
+function getListenerCapture(options) {
+    return typeof options === "boolean" ? options : Boolean(options && options.capture);
+}
+
+function getListenerOnce(options) {
+    return Boolean(options && typeof options === "object" && options.once);
+}
+
+function getListenerSignal(options) {
+    return options && typeof options === "object" ? options.signal : UNDEFINED_VALUE;
 }
 
 function getCallDescription(method, params, sessionId) {

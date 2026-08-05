@@ -1,6 +1,6 @@
 import { assert, assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { CDP } from "../mod.js";
-import { attachToPage, launchBrowser, settlesWithin, startStubServer } from "./helpers.js";
+import { attachToPage, launchBrowser, settlesWithin, startStubServer, waitFor } from "./helpers.js";
 
 Deno.test("protocol", async (test) => {
     const browser = await launchBrowser();
@@ -153,6 +153,76 @@ Deno.test("events", async (test) => {
             await cdp.Target.getTargets();
             cdp.connection.dispatchEvent(new Event("Page.loadEventFired"));
             assertEquals(count, 1);
+            cdp.reset();
+        });
+
+        // the pattern documented in the README: let the browser report the
+        // sessions, then drive each target through the session it reports
+        await test.step("delivers auto-attached sessions to a listener", async () => {
+            const cdp = new CDP({ apiUrl });
+            const sessions = new Map();
+            await cdp.Target.setAutoAttach({
+                autoAttach: true,
+                flatten: true,
+                waitForDebuggerOnStart: false
+            });
+            cdp.Target.addEventListener("attachedToTarget", ({ params }) => {
+                const { sessionId, targetInfo } = params;
+                if (targetInfo.type === "page") {
+                    sessions.set(targetInfo.targetId, sessionId);
+                }
+            });
+            const { targetId } = await cdp.Target.createTarget({ url: "about:blank" });
+            const attached = await waitFor(() => sessions.has(targetId));
+            assert(attached, "no session was reported for the new target");
+            // the reported session must be usable without attaching explicitly
+            const sessionId = sessions.get(targetId);
+            await cdp.Runtime.enable(null, sessionId);
+            const { result } = await cdp.Runtime.evaluate({ expression: "41 + 1" }, sessionId);
+            assertEquals(result.value, 42);
+            await cdp.Target.closeTarget({ targetId });
+            cdp.reset();
+        });
+
+        // the listener options are forwarded to the connection, so they behave
+        // as they do on any EventTarget
+        await test.step("honours the once option", async () => {
+            const cdp = new CDP({ apiUrl });
+            let count = 0;
+            cdp.Page.addEventListener("loadEventFired", () => count++, { once: true });
+            await cdp.Browser.getVersion();
+            cdp.connection.dispatchEvent(new Event("Page.loadEventFired"));
+            cdp.connection.dispatchEvent(new Event("Page.loadEventFired"));
+            assertEquals(count, 1);
+            cdp.reset();
+        });
+
+        await test.step("honours the signal option", async () => {
+            const cdp = new CDP({ apiUrl });
+            const controller = new AbortController();
+            let count = 0;
+            cdp.Page.addEventListener("loadEventFired", () => count++, {
+                signal: controller.signal
+            });
+            await cdp.Browser.getVersion();
+            cdp.connection.dispatchEvent(new Event("Page.loadEventFired"));
+            controller.abort();
+            cdp.connection.dispatchEvent(new Event("Page.loadEventFired"));
+            assertEquals(count, 1);
+            cdp.reset();
+        });
+
+        // the idiom the README documents for waiting on a single event
+        await test.step("resolves a promise from a once listener", async () => {
+            const cdp = new CDP({ apiUrl });
+            const { sessionId } = await attachToPage(cdp);
+            const loaded = new Promise((resolve) =>
+                cdp.Page.addEventListener("loadEventFired", resolve, { once: true })
+            );
+            await cdp.Page.enable(null, sessionId);
+            await cdp.Page.navigate({ url: "data:text/html,<title>once</title>" }, sessionId);
+            const event = await loaded;
+            assertEquals(event.type, "Page.loadEventFired");
             cdp.reset();
         });
 

@@ -147,20 +147,26 @@ declare class CDPDomainListeners {
    *
    * @param type The type of the event
    * @param listener The listener of the event
+   * @param options The options of the listener, as in
+   * {@link EventTarget.addEventListener}
    */
   addEventListener(
     type: string,
     listener: CDPEventListener,
+    options?: AddEventListenerOptions | boolean,
   ): void;
   /**
    * Remove an event listener
    *
    * @param type The type of the event
    * @param listener The listener of the event
+   * @param options The options of the listener, as in
+   * {@link EventTarget.removeEventListener}
    */
   removeEventListener(
     type: string,
     listener: CDPEventListener,
+    options?: EventListenerOptions | boolean,
   ): void;
 }
 

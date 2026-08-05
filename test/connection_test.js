@@ -136,6 +136,51 @@ Deno.test("reconnection", async (test) => {
             cdp.reset();
         });
 
+        // a listener the connection has already dropped must not be registered
+        // again on the connection replacing it
+        await test.step("does not reapply a once listener that has fired", async () => {
+            const cdp = new CDP({ apiUrl });
+            let count = 0;
+            cdp.Page.addEventListener("loadEventFired", () => count++, { once: true });
+            await cdp.Browser.getVersion();
+            cdp.connection.dispatchEvent(new Event("Page.loadEventFired"));
+            assertEquals(count, 1);
+            cdp.connection.close();
+            await cdp.Browser.getVersion();
+            cdp.connection.dispatchEvent(new Event("Page.loadEventFired"));
+            assertEquals(count, 1);
+            cdp.reset();
+        });
+
+        await test.step("reapplies a once listener that has not fired", async () => {
+            const cdp = new CDP({ apiUrl });
+            let count = 0;
+            cdp.Page.addEventListener("loadEventFired", () => count++, { once: true });
+            await cdp.Browser.getVersion();
+            cdp.connection.close();
+            await cdp.Browser.getVersion();
+            cdp.connection.dispatchEvent(new Event("Page.loadEventFired"));
+            cdp.connection.dispatchEvent(new Event("Page.loadEventFired"));
+            assertEquals(count, 1);
+            cdp.reset();
+        });
+
+        await test.step("does not reapply an aborted listener", async () => {
+            const cdp = new CDP({ apiUrl });
+            const controller = new AbortController();
+            let count = 0;
+            cdp.Page.addEventListener("loadEventFired", () => count++, {
+                signal: controller.signal
+            });
+            await cdp.Browser.getVersion();
+            controller.abort();
+            cdp.connection.close();
+            await cdp.Browser.getVersion();
+            cdp.connection.dispatchEvent(new Event("Page.loadEventFired"));
+            assertEquals(count, 0);
+            cdp.reset();
+        });
+
         // regression: every concurrent caller used to open its own socket, and
         // all but the last were leaked
         await test.step("opens a single connection for concurrent calls", async () => {
