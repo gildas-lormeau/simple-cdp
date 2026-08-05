@@ -10,7 +10,7 @@ import {
     getTargets,
     options
 } from "../mod.js";
-import { launchBrowser, withOptions } from "./helpers.js";
+import { launchBrowser, waitFor, withOptions } from "./helpers.js";
 
 /**
  * Reserve a port and release it, so that connecting to it is refused
@@ -47,6 +47,20 @@ Deno.test("target methods", async (test) => {
             });
         });
 
+        // regression: the URL was interpolated into the query string as is, so
+        // everything from the first separator on was lost
+        await test.step("create a target with a URL carrying a query and a fragment", async () => {
+            await withOptions(options, { apiUrl }, async () => {
+                const url = "https://example.com/?a=1&b=2#frag";
+                const target = await createTarget(url);
+                try {
+                    assertEquals(target.url, url);
+                } finally {
+                    await closeTarget(target.id);
+                }
+            });
+        });
+
         await test.step("activate a target", async () => {
             await withOptions(options, { apiUrl }, async () => {
                 const target = await createTarget("about:blank");
@@ -59,8 +73,12 @@ Deno.test("target methods", async (test) => {
             await withOptions(options, { apiUrl }, async () => {
                 const target = await createTarget("about:blank");
                 await closeTarget(target.id);
-                const targets = await getTargets();
-                assert(!targets.some(({ id }) => id === target.id));
+                // the browser acknowledges the request before the target is gone
+                const closed = await waitFor(async () => {
+                    const targets = await getTargets();
+                    return !targets.some(({ id }) => id === target.id);
+                });
+                assert(closed, "the target is still listed");
             });
         });
     } finally {

@@ -160,6 +160,21 @@ export function startStubServer(onConnection) {
 }
 
 /**
+ * Poll a condition until it holds, since the browser applies some operations
+ * asynchronously after acknowledging them
+ */
+export async function waitFor(condition, timeout = 4000, delay = 50) {
+    const deadline = performance.now() + timeout;
+    while (performance.now() < deadline) {
+        if (await condition()) {
+            return true;
+        }
+        await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+    return false;
+}
+
+/**
  * Attach to a page target and return its session ID
  */
 export async function attachToPage(cdp, url = "about:blank") {

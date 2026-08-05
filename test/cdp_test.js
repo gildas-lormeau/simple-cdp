@@ -2,7 +2,7 @@
 
 import { assert, assertEquals, assertRejects, assertStringIncludes } from "@std/assert";
 import { CDP } from "../mod.js";
-import { attachToPage, launchBrowser } from "./helpers.js";
+import { attachToPage, launchBrowser, settlesWithin } from "./helpers.js";
 
 Deno.test("protocol", async (test) => {
     const browser = await launchBrowser();
@@ -55,6 +55,31 @@ Deno.test("protocol", async (test) => {
             assertEquals(protocolVersion, "1.3");
             cdp.reset();
         });
+
+        // regression: a domain resolved every unknown name to a command, so it
+        // was thenable and hung when a promise adopted it
+        await test.step("does not make a domain look like a promise", async () => {
+            const cdp = new CDP({ apiUrl });
+            assertEquals(cdp.Page.then, undefined);
+            const adopted = Promise.resolve(cdp.Page);
+            assertEquals(await settlesWithin(adopted, 4000), "resolved");
+            cdp.reset();
+        });
+
+        // regression: the listener methods used to live on the proxy handler, so
+        // the get trap itself was reachable as a domain method
+        await test.step("does not expose the proxy handler as a command", async () => {
+            const cdp = new CDP({ apiUrl });
+            const error = await assertRejects(() => cdp.Page.get());
+            assertEquals(error.code, -32601);
+            cdp.reset();
+        });
+
+        await test.step("exposes the listener methods on a domain", () => {
+            const cdp = new CDP({ apiUrl });
+            assertEquals(typeof cdp.Page.addEventListener, "function");
+            assertEquals(typeof cdp.Page.removeEventListener, "function");
+        });
     } finally {
         await browser.close();
     }
@@ -89,6 +114,19 @@ Deno.test("events", async (test) => {
             await cdp.Page.navigate({ url: "data:text/html,<title>loaded</title>" }, sessionId);
             const event = await fired.promise;
             assertEquals(event.type, "Page.loadEventFired");
+            cdp.reset();
+        });
+
+        // regression: the queued listeners were flushed by the first call on the
+        // same domain, so a listener on a domain that was never called directly
+        // was silently dropped
+        await test.step("registers a listener queued for another domain", async () => {
+            const cdp = new CDP({ apiUrl });
+            let count = 0;
+            cdp.Page.addEventListener("loadEventFired", () => count++);
+            await cdp.Target.getTargets();
+            cdp.connection.dispatchEvent(new Event("Page.loadEventFired"));
+            assertEquals(count, 1);
             cdp.reset();
         });
 

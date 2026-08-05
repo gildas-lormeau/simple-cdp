@@ -78,6 +78,10 @@ declare interface CDPObject {
  */
 declare interface CDPConnection extends EventTarget {
   /**
+   * Indicates whether the connection is closed
+   */
+  readonly closed: boolean;
+  /**
    * Open the connection
    *
    * @returns A promise that resolves when the connection is opened
@@ -310,6 +314,10 @@ declare const CONNECTION_REFUSED_ERROR_CODE: string;
  * Error code when encountering a connection error
  */
 declare const CONNECTION_ERROR_CODE: string;
+/**
+ * Error code when the connection is closed before the response is received
+ */
+declare const CONNECTION_CLOSED_ERROR_CODE: string;
 
 export {
   activateTarget,
@@ -321,6 +329,7 @@ export {
   options,
   CONNECTION_REFUSED_ERROR_CODE,
   CONNECTION_ERROR_CODE,
+  CONNECTION_CLOSED_ERROR_CODE,
 };
 
 export type {

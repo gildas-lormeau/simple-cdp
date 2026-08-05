@@ -7,6 +7,10 @@ const CLOSE_EVENT = "close";
 const ERROR_EVENT = "error";
 const CONNECTION_REFUSED_ERROR_CODE = "ConnectionRefused";
 const CONNECTION_ERROR_CODE = "ConnectionError";
+const CONNECTION_CLOSED_ERROR_CODE = "ConnectionClosed";
+const ADD_EVENT_LISTENER_METHOD = "addEventListener";
+const REMOVE_EVENT_LISTENER_METHOD = "removeEventListener";
+const THEN_PROPERTY = "then";
 const MIN_INVALID_HTTP_STATUS_CODE = 400;
 const GET_METHOD = "GET";
 const PUT_METHOD = "PUT";
@@ -31,8 +35,9 @@ const DEFAULT_OPTIONS = {
 
 class CDP {
     #connection;
+    #connectionPromise;
     #options;
-    #pendingEventListenerCalls = new Map();
+    #eventListeners = [];
 
     constructor(instanceOptions) {
         // deno-lint-ignore no-this-alias
@@ -61,18 +66,26 @@ class CDP {
         return proxy;
 
         function getDomain(target, domainName) {
+            // the listeners are kept out of the proxy handler, so that the traps
+            // are not reachable as domain methods
+            const listeners = Object.assign(Object.create(null), {
+                [ADD_EVENT_LISTENER_METHOD]: getDomainListenerFunction(ADD_EVENT_LISTENER_METHOD, domainName),
+                [REMOVE_EVENT_LISTENER_METHOD]: getDomainListenerFunction(REMOVE_EVENT_LISTENER_METHOD, domainName)
+            });
             target[domainName] = new Proxy(Object.create(null), {
                 get(target, methodName) {
-                    if (methodName in this) {
-                        return this[methodName];
+                    if (typeof methodName !== "string" || methodName === THEN_PROPERTY) {
+                        // a domain resolves any name to a method, which would
+                        // otherwise make it look like a promise
+                        return UNDEFINED_VALUE;
+                    } else if (methodName in listeners) {
+                        return listeners[methodName];
                     } else if (methodName in target) {
                         return target[methodName];
                     } else {
                         return getDomainMethodFunction(target, methodName, domainName);
                     }
-                },
-                addEventListener: getDomainListenerFunction("addEventListener", domainName),
-                removeEventListener: getDomainListenerFunction("removeEventListener", domainName)
+                }
             });
             return target[domainName];
         }
@@ -80,14 +93,6 @@ class CDP {
         function getDomainMethodFunction(target, methodName, domainName) {
             target[methodName] = async (params = {}, sessionId) => {
                 await ready();
-                const pendingEventListenerCalls = cdp.#pendingEventListenerCalls.get(domainName);
-                if (pendingEventListenerCalls !== UNDEFINED_VALUE) {
-                    while (pendingEventListenerCalls.length > 0) {
-                        const { methodName, domainName, type, listener } = pendingEventListenerCalls.shift();
-                        cdp.#connection[methodName](`${domainName}.${type}`, listener);
-                    }
-                    cdp.#pendingEventListenerCalls.delete(domainName);
-                }
                 return cdp.#connection.sendMessage(`${domainName}.${methodName}`, params, sessionId);
             };
             return target[methodName];
@@ -95,30 +100,48 @@ class CDP {
 
         function getDomainListenerFunction(methodName, domainName) {
             return (type, listener) => {
-                if (cdp.#connection === UNDEFINED_VALUE) {
-                    let pendingEventListenerCalls = cdp.#pendingEventListenerCalls.get(domainName);
-                    if (pendingEventListenerCalls === UNDEFINED_VALUE) {
-                        pendingEventListenerCalls = [];
-                        cdp.#pendingEventListenerCalls.set(domainName, pendingEventListenerCalls);
-                    }
-                    pendingEventListenerCalls.push({ methodName, domainName, type, listener });
+                const eventType = `${domainName}.${type}`;
+                if (methodName === ADD_EVENT_LISTENER_METHOD) {
+                    cdp.#eventListeners.push({ eventType, listener });
                 } else {
-                    cdp.#connection[methodName](`${domainName}.${type}`, listener);
+                    const index = cdp.#eventListeners.findIndex((eventListener) =>
+                        eventListener.eventType === eventType && eventListener.listener === listener);
+                    if (index !== -1) {
+                        cdp.#eventListeners.splice(index, 1);
+                    }
+                }
+                if (cdp.#connection !== UNDEFINED_VALUE) {
+                    cdp.#connection[methodName](eventType, listener);
                 }
             };
         }
 
-        async function ready() {
-            if (cdp.#connection === UNDEFINED_VALUE) {
-                let webSocketDebuggerUrl = cdp.#options.webSocketDebuggerUrl;
-                if (webSocketDebuggerUrl === UNDEFINED_VALUE) {
-                    const url = new URL(cdp.#options.apiPath, cdp.#options.apiUrl);
-                    ({ webSocketDebuggerUrl } = await fetchData(url, cdp.#options));
-                }
-                const connection = new Connection(webSocketDebuggerUrl);
-                await connection.open();
-                cdp.#connection = connection;
+        function ready() {
+            if (cdp.#connection !== UNDEFINED_VALUE && !cdp.#connection.closed) {
+                return Promise.resolve();
             }
+            // a single connection is shared by the calls awaiting it, so that a
+            // burst of concurrent calls does not open one socket each
+            if (cdp.#connectionPromise === UNDEFINED_VALUE) {
+                cdp.#connectionPromise = connect().finally(() => (cdp.#connectionPromise = UNDEFINED_VALUE));
+            }
+            return cdp.#connectionPromise;
+        }
+
+        async function connect() {
+            let webSocketDebuggerUrl = cdp.#options.webSocketDebuggerUrl;
+            if (webSocketDebuggerUrl === UNDEFINED_VALUE) {
+                const url = new URL(cdp.#options.apiPath, cdp.#options.apiUrl);
+                ({ webSocketDebuggerUrl } = await fetchData(url, cdp.#options));
+            }
+            const connection = new Connection(webSocketDebuggerUrl);
+            await connection.open();
+            // the listeners are registered against the connection, so they are
+            // reapplied whenever a new one replaces a closed one
+            for (const { eventType, listener } of cdp.#eventListeners) {
+                connection.addEventListener(eventType, listener);
+            }
+            cdp.#connection = connection;
         }
     }
     get options() {
@@ -134,8 +157,10 @@ class CDP {
         if (this.#connection !== UNDEFINED_VALUE) {
             this.#connection.close();
             this.#connection = UNDEFINED_VALUE;
-            this.#pendingEventListenerCalls.clear();
         }
+        // an explicit reset starts from a clean state, unlike the reconnection
+        // following a connection lost on its own
+        this.#eventListeners.length = 0;
     }
     static getTargets() {
         const { apiPathTargets, apiUrl } = options;
@@ -143,7 +168,7 @@ class CDP {
     }
     static createTarget(url) {
         const { apiPathNewTarget, apiUrl } = options;
-        const path = url ? `${apiPathNewTarget}?${url}` : apiPathNewTarget;
+        const path = url ? `${apiPathNewTarget}?${encodeURIComponent(url)}` : apiPathNewTarget;
         return fetchData(new URL(path, apiUrl), options, PUT_METHOD);
     }
     static async activateTarget(targetId) {
@@ -162,21 +187,27 @@ const getTargets = CDP.getTargets;
 const createTarget = CDP.createTarget;
 const activateTarget = CDP.activateTarget;
 const closeTarget = CDP.closeTarget;
-export { cdp, CDP, options, getTargets, createTarget, activateTarget, closeTarget, CONNECTION_REFUSED_ERROR_CODE, CONNECTION_ERROR_CODE };
+export { cdp, CDP, options, getTargets, createTarget, activateTarget, closeTarget, CONNECTION_REFUSED_ERROR_CODE, CONNECTION_ERROR_CODE, CONNECTION_CLOSED_ERROR_CODE };
 
 class Connection extends EventTarget {
     #webSocketDebuggerUrl;
     #webSocket;
     #pendingRequests = new Map();
     #nextRequestId = 0;
+    #closed = false;
 
     constructor(webSocketDebuggerUrl) {
         super();
         this.#webSocketDebuggerUrl = webSocketDebuggerUrl;
     }
+    get closed() {
+        return this.#closed;
+    }
     open() {
         this.#webSocket = new WebSocket(this.#webSocketDebuggerUrl);
         this.#webSocket.addEventListener(MESSAGE_EVENT, (event) => this.#onMessage(JSON.parse(event.data)));
+        this.#webSocket.addEventListener(CLOSE_EVENT, (event) => this.#onClose(event.reason));
+        this.#webSocket.addEventListener(ERROR_EVENT, () => this.#onClose());
         return new Promise((resolve, reject) => {
             this.#webSocket.addEventListener(OPEN_EVENT, () => resolve());
             this.#webSocket.addEventListener(CLOSE_EVENT, (event) => reject(new Error(event.reason)));
@@ -184,6 +215,9 @@ class Connection extends EventTarget {
         });
     }
     sendMessage(method, params = {}, sessionId) {
+        if (this.#closed) {
+            return Promise.reject(getConnectionClosedError(method, params, sessionId));
+        }
         const id = this.#nextRequestId;
         const message = JSON.stringify({ id, method, params, sessionId });
         this.#nextRequestId = (this.#nextRequestId + 1) % Number.MAX_SAFE_INTEGER;
@@ -194,21 +228,37 @@ class Connection extends EventTarget {
         return promise;
     }
     close() {
+        this.#onClose();
         this.#webSocket.close();
+    }
+    #onClose(reason) {
+        if (!this.#closed) {
+            this.#closed = true;
+            // the responses will never arrive, so the calls awaiting them are
+            // rejected instead of being left pending forever
+            for (const [id, { reject, method, params, sessionId }] of this.#pendingRequests) {
+                this.#pendingRequests.delete(id);
+                reject(getConnectionClosedError(method, params, sessionId, reason));
+            }
+        }
     }
     #onMessage({ id, method, result, error, params, sessionId }) {
         if (id !== UNDEFINED_VALUE) {
-            const { resolve, reject, method, params, sessionId } = this.#pendingRequests.get(id);
-            if (error === UNDEFINED_VALUE) {
-                resolve(result);
-            } else {
-                const message = error.message + " when calling " + `${method}(${JSON.stringify(params)})` + `
-                    ${sessionId === UNDEFINED_VALUE ? "" : ` (sessionId ${JSON.stringify(sessionId)})`}`;
-                const errorEvent = new Error(message);
-                errorEvent.code = error.code;
-                reject(errorEvent);
+            const pendingRequest = this.#pendingRequests.get(id);
+            // a response can arrive for a request that is no longer pending
+            if (pendingRequest !== UNDEFINED_VALUE) {
+                const { resolve, reject, method, params, sessionId } = pendingRequest;
+                this.#pendingRequests.delete(id);
+                if (error === UNDEFINED_VALUE) {
+                    resolve(result);
+                } else {
+                    const errorEvent = new Error(
+                        `${error.message} when calling ${getCallDescription(method, params, sessionId)}`
+                    );
+                    errorEvent.code = error.code;
+                    reject(errorEvent);
+                }
             }
-            this.#pendingRequests.delete(id);
         }
         if (method !== UNDEFINED_VALUE) {
             const event = new Event(method);
@@ -216,6 +266,20 @@ class Connection extends EventTarget {
             this.dispatchEvent(event);
         }
     }
+}
+
+function getCallDescription(method, params, sessionId) {
+    const call = `${method}(${JSON.stringify(params)})`;
+    return sessionId === UNDEFINED_VALUE ? call : `${call} (sessionId ${JSON.stringify(sessionId)})`;
+}
+
+function getConnectionClosedError(method, params, sessionId, reason) {
+    const description = getCallDescription(method, params, sessionId);
+    const error = new Error(
+        `connection closed${reason ? ` (${reason})` : ""} when calling ${description}`
+    );
+    error.code = CONNECTION_CLOSED_ERROR_CODE;
+    return error;
 }
 
 function fetchData(url, options, method = GET_METHOD, parseJSON = true) {
