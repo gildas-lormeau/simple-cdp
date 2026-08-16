@@ -8,6 +8,8 @@ const ERROR_EVENT = "error";
 const CONNECTION_REFUSED_ERROR_CODE = "ConnectionRefused";
 const CONNECTION_ERROR_CODE = "ConnectionError";
 const CONNECTION_CLOSED_ERROR_CODE = "ConnectionClosed";
+const CONNECTION_TIMEOUT_ERROR_CODE = "ConnectionTimeout";
+const COMMAND_TIMEOUT_ERROR_CODE = "CommandTimeout";
 const ADD_EVENT_LISTENER_METHOD = "addEventListener";
 const REMOVE_EVENT_LISTENER_METHOD = "removeEventListener";
 const THEN_PROPERTY = "then";
@@ -176,7 +178,7 @@ class CDP extends EventTarget {
                 const url = new URL(cdp.#options.apiPath, cdp.#options.apiUrl);
                 ({ webSocketDebuggerUrl } = await fetchData(url, cdp.#options));
             }
-            const connection = new Connection(webSocketDebuggerUrl);
+            const connection = new Connection(webSocketDebuggerUrl, cdp.#options);
             await connection.open();
             // the connection is replaced when it closes, so the events are
             // relayed by the instance, which outlives it
@@ -243,18 +245,20 @@ const getTargets = CDP.getTargets;
 const createTarget = CDP.createTarget;
 const activateTarget = CDP.activateTarget;
 const closeTarget = CDP.closeTarget;
-export { cdp, CDP, options, getTargets, createTarget, activateTarget, closeTarget, CONNECTION_REFUSED_ERROR_CODE, CONNECTION_ERROR_CODE, CONNECTION_CLOSED_ERROR_CODE };
+export { cdp, CDP, options, getTargets, createTarget, activateTarget, closeTarget, CONNECTION_REFUSED_ERROR_CODE, CONNECTION_ERROR_CODE, CONNECTION_CLOSED_ERROR_CODE, CONNECTION_TIMEOUT_ERROR_CODE, COMMAND_TIMEOUT_ERROR_CODE };
 
 class Connection extends EventTarget {
     #webSocketDebuggerUrl;
     #webSocket;
+    #options;
     #pendingRequests = new Map();
     #nextRequestId = 0;
     #closed = false;
 
-    constructor(webSocketDebuggerUrl) {
+    constructor(webSocketDebuggerUrl, options = DEFAULT_OPTIONS) {
         super();
         this.#webSocketDebuggerUrl = webSocketDebuggerUrl;
+        this.#options = options;
     }
     get closed() {
         return this.#closed;
@@ -265,9 +269,28 @@ class Connection extends EventTarget {
         this.#webSocket.addEventListener(CLOSE_EVENT, (event) => this.#onClose(event.reason));
         this.#webSocket.addEventListener(ERROR_EVENT, () => this.#onClose());
         return new Promise((resolve, reject) => {
-            this.#webSocket.addEventListener(OPEN_EVENT, () => resolve());
-            this.#webSocket.addEventListener(CLOSE_EVENT, (event) => reject(new Error(event.reason)));
-            this.#webSocket.addEventListener(ERROR_EVENT, () => reject(new Error()));
+            const { connectionMaxTime } = this.#options;
+            let timeoutId;
+            if (connectionMaxTime !== UNDEFINED_VALUE) {
+                // a handshake left hanging by an unresponsive browser would
+                // otherwise keep the caller waiting forever
+                timeoutId = setTimeout(() => {
+                    reject(getConnectionTimeoutError(connectionMaxTime));
+                    this.close();
+                }, connectionMaxTime);
+            }
+            this.#webSocket.addEventListener(OPEN_EVENT, () => {
+                clearTimeout(timeoutId);
+                resolve();
+            });
+            this.#webSocket.addEventListener(CLOSE_EVENT, (event) => {
+                clearTimeout(timeoutId);
+                reject(new Error(event.reason));
+            });
+            this.#webSocket.addEventListener(ERROR_EVENT, () => {
+                clearTimeout(timeoutId);
+                reject(new Error());
+            });
         });
     }
     sendMessage(method, params = {}, sessionId) {
@@ -281,6 +304,15 @@ class Connection extends EventTarget {
         let pendingRequest;
         const promise = new Promise((resolve, reject) => (pendingRequest = { resolve, reject, method, params, sessionId }));
         this.#pendingRequests.set(id, pendingRequest);
+        const { commandMaxTime } = this.#options;
+        if (commandMaxTime !== UNDEFINED_VALUE) {
+            // a command whose response never arrives would otherwise be left
+            // pending forever, the connection itself stays usable
+            pendingRequest.timeoutId = setTimeout(() => {
+                this.#pendingRequests.delete(id);
+                pendingRequest.reject(getCommandTimeoutError(method, params, sessionId, commandMaxTime));
+            }, commandMaxTime);
+        }
         return promise;
     }
     close() {
@@ -292,7 +324,8 @@ class Connection extends EventTarget {
             this.#closed = true;
             // the responses will never arrive, so the calls awaiting them are
             // rejected instead of being left pending forever
-            for (const [id, { reject, method, params, sessionId }] of this.#pendingRequests) {
+            for (const [id, { reject, method, params, sessionId, timeoutId }] of this.#pendingRequests) {
+                clearTimeout(timeoutId);
                 this.#pendingRequests.delete(id);
                 reject(getConnectionClosedError(method, params, sessionId, reason));
             }
@@ -306,7 +339,8 @@ class Connection extends EventTarget {
             const pendingRequest = this.#pendingRequests.get(id);
             // a response can arrive for a request that is no longer pending
             if (pendingRequest !== UNDEFINED_VALUE) {
-                const { resolve, reject, method, params, sessionId } = pendingRequest;
+                const { resolve, reject, method, params, sessionId, timeoutId } = pendingRequest;
+                clearTimeout(timeoutId);
                 this.#pendingRequests.delete(id);
                 if (error === UNDEFINED_VALUE) {
                     resolve(result);
@@ -363,6 +397,19 @@ function getListenerSignal(options) {
 function getCallDescription(method, params, sessionId) {
     const call = `${method}(${JSON.stringify(params)})`;
     return sessionId === UNDEFINED_VALUE ? call : `${call} (sessionId ${JSON.stringify(sessionId)})`;
+}
+
+function getConnectionTimeoutError(connectionMaxTime) {
+    const error = new Error(`connection not opened after ${connectionMaxTime} ms`);
+    error.code = CONNECTION_TIMEOUT_ERROR_CODE;
+    return error;
+}
+
+function getCommandTimeoutError(method, params, sessionId, commandMaxTime) {
+    const description = getCallDescription(method, params, sessionId);
+    const error = new Error(`response not received after ${commandMaxTime} ms when calling ${description}`);
+    error.code = COMMAND_TIMEOUT_ERROR_CODE;
+    return error;
 }
 
 function getConnectionClosedError(method, params, sessionId, reason) {

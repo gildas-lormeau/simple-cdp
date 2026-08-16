@@ -1,5 +1,5 @@
 import { assert, assertEquals, assertNotEquals, assertRejects } from "@std/assert";
-import { CDP, CONNECTION_CLOSED_ERROR_CODE, closeTarget, createTarget, options } from "../mod.js";
+import { CDP, COMMAND_TIMEOUT_ERROR_CODE, CONNECTION_CLOSED_ERROR_CODE, CONNECTION_TIMEOUT_ERROR_CODE, closeTarget, createTarget, options } from "../mod.js";
 import { launchBrowser, settlesWithin, startStubServer, waitFor, withOptions } from "./helpers.js";
 
 const SETTLE_TIMEOUT = 4000;
@@ -252,4 +252,74 @@ Deno.test("reconnection", async (test) => {
     } finally {
         await browser.close();
     }
+});
+
+Deno.test("timeouts", async (test) => {
+    await test.step("rejects a command when the response does not arrive in time", async () => {
+        const stub = startStubServer(() => {});
+        try {
+            const cdp = new CDP({
+                webSocketDebuggerUrl: stub.webSocketDebuggerUrl,
+                commandMaxTime: 250
+            });
+            const error = await assertRejects(() => cdp.Browser.getVersion());
+            assertEquals(error.code, COMMAND_TIMEOUT_ERROR_CODE);
+            assert(
+                error.message.includes("Browser.getVersion"),
+                `unexpected message: ${error.message}`
+            );
+            assertEquals(cdp.connection.closed, false);
+            cdp.reset();
+        } finally {
+            await stub.close();
+        }
+    });
+
+    await test.step("resolves a command answered in time", async () => {
+        const stub = startStubServer((socket) => {
+            socket.addEventListener("message", ({ data }) =>
+                socket.send(JSON.stringify({ id: JSON.parse(data).id, result: { ok: true } }))
+            );
+        });
+        try {
+            const cdp = new CDP({
+                webSocketDebuggerUrl: stub.webSocketDebuggerUrl,
+                commandMaxTime: SETTLE_TIMEOUT
+            });
+            const { ok } = await cdp.Browser.getVersion();
+            assertEquals(ok, true);
+            cdp.reset();
+        } finally {
+            await stub.close();
+        }
+    });
+
+    await test.step("rejects when the connection does not open in time", async () => {
+        // a listener that accepts the socket but never answers the handshake
+        const listener = Deno.listen({ port: 0 });
+        const connections = [];
+        const accepting = (async () => {
+            for await (const connection of listener) {
+                connections.push(connection);
+            }
+        })().catch(() => {});
+        try {
+            const cdp = new CDP({
+                webSocketDebuggerUrl: `ws://127.0.0.1:${listener.addr.port}`,
+                connectionMaxTime: 250
+            });
+            const error = await assertRejects(() => cdp.Browser.getVersion());
+            assertEquals(error.code, CONNECTION_TIMEOUT_ERROR_CODE);
+        } finally {
+            listener.close();
+            for (const connection of connections) {
+                try {
+                    connection.close();
+                } catch {
+                    // already gone
+                }
+            }
+            await accepting;
+        }
+    });
 });

@@ -223,6 +223,17 @@ The rejection carries the reason of the signal, which is a `TimeoutError` for
 [AbortSignal.timeout()](https://developer.mozilla.org/docs/Web/API/AbortSignal/timeout_static)
 and an `AbortError` otherwise.
 
+The waits on the browser itself can be bounded with `connectionMaxTime`, the
+maximum delay in ms for the WebSocket connection to open, and `commandMaxTime`,
+the maximum delay in ms for the response of a command to arrive. Both are
+unlimited by default. A command timeout rejects the pending call and leaves the
+connection open, since the protocol cannot cancel a command once it is sent.
+
+```js
+// fail a call instead of waiting forever on an unresponsive browser
+const cdp = new CDP({ connectionMaxTime: 5000, commandMaxTime: 30000 });
+```
+
 Rejected calls carry a `code` property. Protocol errors use the code returned by the browser (e.g. `-32601` when the method does not exist), and connection errors use one of the exported codes.
 
 | Code | Description |
@@ -230,3 +241,5 @@ Rejected calls carry a `code` property. Protocol errors use the code returned by
 | `CONNECTION_REFUSED_ERROR_CODE` | The browser could not be reached after `connectionMaxRetry` attempts |
 | `CONNECTION_ERROR_CODE` | The browser returned an HTTP error, whose status is set on `status` |
 | `CONNECTION_CLOSED_ERROR_CODE` | The connection closed before the response was received |
+| `CONNECTION_TIMEOUT_ERROR_CODE` | The connection did not open within `connectionMaxTime` |
+| `COMMAND_TIMEOUT_ERROR_CODE` | The response of a command was not received within `commandMaxTime` |

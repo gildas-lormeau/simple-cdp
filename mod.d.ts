@@ -55,6 +55,16 @@ declare interface CDPOptions {
    */
   connectionRetryDelay?: number;
   /**
+   * The maximum delay in ms to wait for the connection to open, unlimited when
+   * undefined
+   */
+  connectionMaxTime?: number;
+  /**
+   * The maximum delay in ms to wait for the response of a command, unlimited
+   * when undefined
+   */
+  commandMaxTime?: number;
+  /**
    * The signal aborting the requests establishing the connection, and the wait
    * between the retries
    *
@@ -374,6 +384,15 @@ declare const CONNECTION_ERROR_CODE: string;
  * Error code when the connection is closed before the response is received
  */
 declare const CONNECTION_CLOSED_ERROR_CODE: string;
+/**
+ * Error code when the connection is not opened within `connectionMaxTime`
+ */
+declare const CONNECTION_TIMEOUT_ERROR_CODE: string;
+/**
+ * Error code when the response of a command is not received within
+ * `commandMaxTime`
+ */
+declare const COMMAND_TIMEOUT_ERROR_CODE: string;
 
 export {
   activateTarget,
@@ -386,6 +405,8 @@ export {
   CONNECTION_REFUSED_ERROR_CODE,
   CONNECTION_ERROR_CODE,
   CONNECTION_CLOSED_ERROR_CODE,
+  CONNECTION_TIMEOUT_ERROR_CODE,
+  COMMAND_TIMEOUT_ERROR_CODE,
 };
 
 export type {
