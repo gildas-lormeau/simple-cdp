@@ -22,6 +22,10 @@ const ONCE_OPTION = { once: true };
 const MIN_INVALID_HTTP_STATUS_CODE = 400;
 const GET_METHOD = "GET";
 const PUT_METHOD = "PUT";
+const PAGE_NAVIGATE_METHOD = "Page.navigate";
+const RUNTIME_EVALUATE_METHOD = "Runtime.evaluate";
+const EMPTY_EXPRESSION = "0";
+const BLANK_PAGE_URL = "about:blank";
 const DEFAULT_URL = "http://localhost:9222";
 const DEFAULT_PATH = "json/version";
 const DEFAULT_PATH_TARGETS = "json";
@@ -222,10 +226,24 @@ class CDP extends EventTarget {
         const { apiPathTargets, apiUrl } = options;
         return fetchData(new URL(apiPathTargets, apiUrl), getRequestOptions(requestOptions));
     }
-    static createTarget(url, requestOptions) {
+    static async createTarget(url, requestOptions) {
         const { apiPathNewTarget, apiUrl } = options;
-        const path = url ? `${apiPathNewTarget}?${encodeURIComponent(url)}` : apiPathNewTarget;
-        return fetchData(new URL(path, apiUrl), getRequestOptions(requestOptions), PUT_METHOD);
+        const targetOptions = getRequestOptions(requestOptions);
+        const targetInfo = await fetchData(new URL(apiPathNewTarget, apiUrl), targetOptions, PUT_METHOD);
+        // some browsers (e.g. Vivaldi) ignore the URL of the creation request
+        // and leave the commands sent to the new target unanswered until it
+        // navigates, so the target is created blank and then navigated
+        const connection = new Connection(targetInfo.webSocketDebuggerUrl, targetOptions);
+        await connection.open();
+        try {
+            await connection.sendMessage(PAGE_NAVIGATE_METHOD, { url: url || BLANK_PAGE_URL });
+            // Chrome drops a close request received before the page of the
+            // navigation answers, so the target is returned once it does
+            await connection.sendMessage(RUNTIME_EVALUATE_METHOD, { expression: EMPTY_EXPRESSION });
+        } finally {
+            connection.close();
+        }
+        return url ? Object.assign(targetInfo, { url }) : targetInfo;
     }
     static async activateTarget(targetId, requestOptions) {
         const { apiPathActivateTarget, apiUrl } = options;

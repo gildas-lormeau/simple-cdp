@@ -1,6 +1,7 @@
 import { assert, assertEquals, assertNotEquals, assertRejects } from "@std/assert";
 import {
     activateTarget,
+    CDP,
     closeTarget,
     CONNECTION_ERROR_CODE,
     CONNECTION_REFUSED_ERROR_CODE,
@@ -53,6 +54,9 @@ Deno.test("target methods", async (test) => {
                 const target = await createTarget(url);
                 try {
                     assertEquals(target.url, url);
+                    using cdp = new CDP(target);
+                    const { result } = await cdp.Runtime.evaluate({ expression: "location.href" });
+                    assertEquals(result.value, url);
                 } finally {
                     await closeTarget(target.id);
                 }
@@ -81,6 +85,55 @@ Deno.test("target methods", async (test) => {
         });
     } finally {
         await browser.close();
+    }
+});
+
+// regression: Vivaldi ignores the URL of the creation request and leaves the
+// commands sent to a target unanswered until it navigates, so the first
+// Runtime.evaluate on a new target never settled
+Deno.test("navigate a new target before it is used", async () => {
+    const pendingMessages = [];
+    let navigatedURL;
+    const server = Deno.serve({ port: 0, onListen() {} }, (request) => {
+        const { pathname } = new URL(request.url);
+        if (request.headers.get("upgrade") === "websocket") {
+            const { socket, response } = Deno.upgradeWebSocket(request);
+            socket.addEventListener("message", ({ data }) => {
+                const message = JSON.parse(data);
+                if (message.method === "Page.navigate") {
+                    navigatedURL = message.params.url;
+                    socket.send(JSON.stringify({ id: message.id, result: {} }));
+                    for (const { socket, id } of pendingMessages.splice(0)) {
+                        socket.send(JSON.stringify({ id, result: {} }));
+                    }
+                } else if (navigatedURL === undefined) {
+                    pendingMessages.push({ socket, id: message.id });
+                } else {
+                    socket.send(JSON.stringify({ id: message.id, result: {} }));
+                }
+            });
+            return response;
+        } else if (pathname === "/json/new") {
+            return Response.json({
+                id: "target",
+                type: "page",
+                url: "about:blank",
+                webSocketDebuggerUrl: `ws://127.0.0.1:${server.addr.port}/devtools/page/target`
+            });
+        } else {
+            return new Response("", { status: 404 });
+        }
+    });
+    try {
+        const apiUrl = `http://127.0.0.1:${server.addr.port}`;
+        await withOptions(options, { apiUrl }, async () => {
+            const target = await createTarget();
+            assertEquals(navigatedURL, "about:blank");
+            using cdp = new CDP(Object.assign({}, target, { commandMaxTime: 2000 }));
+            await cdp.Runtime.evaluate({ expression: "1" });
+        });
+    } finally {
+        await server.shutdown();
     }
 });
 

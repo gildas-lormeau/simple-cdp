@@ -314,7 +314,12 @@ declare class CDP extends CDPMembers {
    */
   static getTargets(options?: CDPRequestOptions): Promise<CDPTargetInfo[]>;
   /**
-   * Create a target
+   * Create a target, then navigate it to the URL (or to "about:blank")
+   *
+   * The target is navigated once it exists rather than by the creation
+   * request, since some browsers (e.g. Vivaldi) ignore that URL and do not
+   * answer the commands sent to a target that has never navigated. The
+   * promise resolves once the navigation is committed.
    *
    * @param url The URL of the target
    *
