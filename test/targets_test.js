@@ -25,14 +25,21 @@ Deno.test("target methods", async (test) => {
     const browser = await launchBrowser();
     const { apiUrl } = browser;
     try {
+        // the page is created here since some browsers (e.g. Vivaldi) open none
+        // at launch and ignore the URL passed on the command line
         await test.step("list the open targets", async () => {
             await withOptions(options, { apiUrl }, async () => {
-                const targets = await getTargets();
-                assert(Array.isArray(targets));
-                const page = targets.find((target) => target.type === "page");
-                assert(page !== undefined);
-                assertEquals(typeof page.id, "string");
-                assertEquals(typeof page.webSocketDebuggerUrl, "string");
+                const target = await createTarget();
+                try {
+                    const targets = await getTargets();
+                    assert(Array.isArray(targets));
+                    const page = targets.find(({ id }) => id === target.id);
+                    assert(page !== undefined);
+                    assertEquals(page.type, "page");
+                    assertEquals(typeof page.webSocketDebuggerUrl, "string");
+                } finally {
+                    await closeTarget(target.id);
+                }
             });
         });
 

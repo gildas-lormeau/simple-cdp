@@ -174,9 +174,14 @@ export async function waitFor(condition, timeout = 4000, delay = 50) {
 
 /**
  * Attach to a page target and return its session ID
+ *
+ * The page is navigated through the session because some browsers (e.g.
+ * Vivaldi) ignore the URL of Target.createTarget and leave the commands sent to
+ * the target unanswered until it navigates.
  */
 export async function attachToPage(cdp, url = "about:blank") {
     const { targetId } = await cdp.Target.createTarget({ url });
     const { sessionId } = await cdp.Target.attachToTarget({ targetId, flatten: true });
+    await cdp.Page.navigate({ url }, sessionId);
     return { targetId, sessionId };
 }

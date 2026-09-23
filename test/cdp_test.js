@@ -177,6 +177,8 @@ Deno.test("events", async (test) => {
             assert(attached, "no session was reported for the new target");
             // the reported session must be usable without attaching explicitly
             const sessionId = sessions.get(targetId);
+            // see attachToPage()
+            await cdp.Page.navigate({ url: "about:blank" }, sessionId);
             await cdp.Runtime.enable(null, sessionId);
             const { result } = await cdp.Runtime.evaluate({ expression: "41 + 1" }, sessionId);
             assertEquals(result.value, 42);
